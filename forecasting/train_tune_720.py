@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 
 from config.net_config import DataConfig, TrainConfig
 from data.data_factory import data_provider
-from models.net import TrainedNet
+from models.canet import TrainedCANet
 from utils.utils import str2bool
 
 # Set device to GPU if available, else CPU
@@ -29,6 +29,7 @@ LOW_DROPOUT, HIGH_DROPOUT = 0.3, 0.5
 BATCH_SIZES: List[int] = [16]
 PATCH_SIZES: List[List[int]] = [[8, 48]]
 EMBED_DIMS: List[int] = [64]
+
 
 def clean_trial_logs(study: optuna.Study, config: TrainConfig, logs_dir: str):
   best_trial_number: int = study.best_trial.number
@@ -50,7 +51,7 @@ def train_model(
   test_dataloader: DataLoader[torch.dtype],
   checkpoint_dir_path: str,
   checkpoint_callback: ModelCheckpoint,
-) -> tuple[TrainedNet, Dict[str, float], Dict[str, float]]:
+) -> tuple[TrainedCANet, Dict[str, float], Dict[str, float]]:
   trainer = L.Trainer(
     default_root_dir=checkpoint_dir_path,
     accelerator="auto",
@@ -69,12 +70,12 @@ def train_model(
   trainer.logger._default_hp_metric = None
 
   L.seed_everything(config.seed)
-  model = TrainedNet(config)
+  model = TrainedCANet(config)
 
   trainer.fit(model, train_dataloader, val_dataloader)
 
   # Load the best checkpoint after training
-  model: TrainedNet = TrainedNet.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+  model: TrainedCANet = TrainedCANet.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
 
   # Test the model on validation and test datasets
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)

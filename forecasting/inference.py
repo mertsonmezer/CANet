@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import torch.nn.functional as F
 import lightning as L
 from lightning.pytorch.utilities.model_summary import ModelSummary
-from models.net import TrainedNet
+from models.canet import TrainedCANet
 from data.data_factory import data_provider
 import os
 import optuna
@@ -41,9 +41,7 @@ def get_best_model_path(data: str, seq_len: int, pred_len: int, normalization: s
   best_trial = study.best_trial
   best_trial_id = best_trial._trial_id
 
-  model_folder_path_prefix: str = (
-    f"logs/{data}_{str(seq_len)}_{str(pred_len)}_trial{str(best_trial_id - 1)}_norm{str(normalization)}_mp{str(mrp)}"
-  )
+  model_folder_path_prefix: str = f"logs/{data}_{str(seq_len)}_{str(pred_len)}_trial{str(best_trial_id - 1)}_norm{str(normalization)}_mp{str(mrp)}"
 
   matching_folders = glob.glob(f"{model_folder_path_prefix}*")
 
@@ -73,14 +71,14 @@ def get_best_model_path(data: str, seq_len: int, pred_len: int, normalization: s
 
 
 # Function to load the best model
-def get_best_model(data: str, seq_len: int, pred_len: int, normalization: str, mrp: bool) -> TrainedNet:
+def get_best_model(data: str, seq_len: int, pred_len: int, normalization: str, mrp: bool) -> TrainedCANet:
   best_model_path: str = get_best_model_path(data, seq_len, pred_len, normalization, mrp)
-  best_model: TrainedNet = TrainedNet.load_from_checkpoint(best_model_path)
+  best_model: TrainedCANet = TrainedCANet.load_from_checkpoint(best_model_path)
   return best_model
 
 
 # Function to perform inference, measure time, compute MSE and MAE, and plot predictions vs actual target
-def perform_inference(model: TrainedNet, test_dataloader):
+def perform_inference(model: TrainedCANet, test_dataloader):
   model.eval()
 
   # Get a batch from the dataloader
@@ -150,7 +148,7 @@ if __name__ == "__main__":
   args = parse_args()
 
   # Pass the command-line parameters to the functions
-  model: TrainedNet = get_best_model(args.data, args.seq_len, args.pred_len, args.normalization, args.mrp)
+  model: TrainedCANet = get_best_model(args.data, args.seq_len, args.pred_len, args.normalization, args.mrp)
 
   # Print model summary
   model_summary = ModelSummary(model, max_depth=-1)

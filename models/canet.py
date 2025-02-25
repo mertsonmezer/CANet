@@ -8,14 +8,14 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
 
 from config.net_config import TrainConfig
-from layers.net_layers import NetLayer
+from layers.canet_layers import CANetLayer
 from layers.revin import RevIN
 from layers.sklinear import SKLinear
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class Net(L.LightningModule):
+class CANet(L.LightningModule):
   def __init__(self, config: TrainConfig):
     super().__init__()
     self.config: TrainConfig = config
@@ -26,7 +26,7 @@ class Net(L.LightningModule):
     drop_path_ratios: List[float] = [x.item() for x in torch.linspace(0, 0.5, self.config.depth)]
     self.net_layers = nn.ModuleList(
       [
-        NetLayer(
+        CANetLayer(
           patch_size=self.config.patch_sizes[i] if self.config.use_multi_patching else self.config.patch_size,
           config=self.config,
           drop_path_ratio=drop_path_ratios[i],
@@ -78,11 +78,11 @@ class Net(L.LightningModule):
     return out
 
 
-class TrainedNet(L.LightningModule):
+class TrainedCANet(L.LightningModule):
   def __init__(self, config: TrainConfig):
     super().__init__()
     self.config: TrainConfig = config
-    self.model = Net(self.config)
+    self.model = CANet(self.config)
     self.criterion = nn.MSELoss()
     self.mse = MeanSquaredError()
     self.mae = MeanAbsoluteError()

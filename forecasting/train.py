@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 
 from config.net_config import DataConfig, TrainConfig
 from data.data_factory import data_provider
-from models.net import TrainedNet
+from models.canet import TrainedCANet
 from utils.utils import list_of_ints, str2bool
 
 # Set device to GPU if available, else CPU
@@ -44,12 +44,12 @@ def train_model(
   trainer.logger._default_hp_metric = None
 
   L.seed_everything(config.seed)
-  model = TrainedNet(config)
+  model = TrainedCANet(config)
 
   trainer.fit(model, train_dataloader, val_dataloader)
 
   # Load the best checkpoint after training
-  model: TrainedNet = TrainedNet.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+  model: TrainedCANet = TrainedCANet.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
 
   # Test the model on validation and test datasets
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)

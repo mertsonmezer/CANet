@@ -209,7 +209,7 @@ class AdaptiveSpectralBlock(L.LightningModule):
     return x
 
 
-class NetLayer(L.LightningModule):
+class CANetLayer(L.LightningModule):
   def __init__(self, patch_size: int, config: TrainConfig, mlp_ratio: float = 3.0, drop_path_ratio: float = 0.0):
     super().__init__()
     self.patch_size: int = patch_size
