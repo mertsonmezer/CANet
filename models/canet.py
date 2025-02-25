@@ -49,7 +49,7 @@ class CANet(L.LightningModule):
     self.fc2 = nn.Linear(self.config.output_features, self.config.pred_len)
 
   def forward(self, x: Tensor) -> Tensor:
-    B, L, M = x.shape
+    B, _, M = x.shape
 
     # Instance Normalization
     mean: Tensor = x.mean(dim=1, keepdim=True)
@@ -83,10 +83,13 @@ class TrainedCANet(L.LightningModule):
     super().__init__()
     self.config: TrainConfig = config
     self.model = CANet(self.config)
+
     self.criterion = nn.MSELoss()
     self.mse = MeanSquaredError()
     self.mae = MeanAbsoluteError()
+
     self.lr: float = self.config.train_lr
+
     self.preds: List[Any] = []  # TODO: Replace Any to the suitable type
     self.trues: List[Any] = []  # TODO: Replace Any to the suitable type
 

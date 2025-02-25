@@ -1,4 +1,5 @@
 from typing import Tuple
+
 import lightning as L
 import torch
 import torch.nn as nn
@@ -9,26 +10,6 @@ from torch import Tensor
 from config.net_config import TrainConfig
 from layers.dain import DAIN_Layer
 from layers.positional_encoding import positional_encoding
-
-
-class StyleLinearCombination(nn.Module):
-  def __init__(self, embed_dim: int):
-    super().__init__()
-    self.embed_dim: int = embed_dim
-
-    self.mean_linear = nn.Linear(2 * self.embed_dim, self.embed_dim)
-    self.std_linear = nn.Linear(2 * self.embed_dim, self.embed_dim)
-
-  def forward(self, style1_mean: Tensor, style2_mean: Tensor, style1_std: Tensor, style2_std: Tensor) -> Tuple[Tensor, Tensor]:
-    batch_size: int = style1_mean.size(0)
-
-    combined_means: Tensor = torch.cat((style1_mean.view(batch_size, -1), style2_mean.view(batch_size, -1)), dim=1)
-    combined_stds: Tensor = torch.cat((style1_std.view(batch_size, -1), style2_std.view(batch_size, -1)), dim=1)
-
-    final_mean: Tensor = self.mean_linear(combined_means).view(batch_size, 1, -1)
-    final_std: Tensor = self.std_linear(combined_stds).view(batch_size, 1, -1)
-
-    return final_mean, final_std
 
 
 class StyleBlendGate(L.LightningModule):
@@ -230,8 +211,8 @@ class CANetLayer(L.LightningModule):
     if self.config.first_norm_layer == "adain" or self.config.second_norm_layer == "adain":
       self.mean_std_proj = MeanStdProjector(self.config.embed_dim, self.config.dropout_rate)
       self.style_blend_gate = StyleBlendGate(self.config.embed_dim, self.config.blend_ratio, self.config.style_blend_gate_affine)
-      # self.linear_combination = StyleLinearCombination(self.config.embed_dim)
 
+    # First Normalization Layer
     if self.config.first_norm_layer == "adain":
       self.norm_layer1 = AdaIN()
     elif self.config.first_norm_layer == "layer":
@@ -243,6 +224,7 @@ class CANetLayer(L.LightningModule):
     elif self.config.first_norm_layer == "dain":
       self.norm_layer1 = DAIN_Layer(mode="full", input_dim=self.patchifier.num_patches)
 
+    # Second Normalization Layer
     if self.config.second_norm_layer == "adain":
       self.norm_layer2 = AdaIN()
     elif self.config.second_norm_layer == "layer":
@@ -285,7 +267,6 @@ class CANetLayer(L.LightningModule):
     if self.config.first_norm_layer == "adain":
       mean, std = self.mean_std_proj(mean, std)
       mean, std = self.style_blend_gate(mean, std, style_mean, style_std)
-      # mean, std = self.linear_combination(mean, std, style_mean, style_std)
       x_patched = self.norm_layer1(x_patched, mean, std)
     else:
       x_patched = self.norm_layer1(x_patched)
@@ -295,7 +276,6 @@ class CANetLayer(L.LightningModule):
     if self.config.second_norm_layer == "adain":
       mean, std = self.mean_std_proj(mean, std)
       mean, std = self.style_blend_gate(mean, std, style_mean, style_std)
-      # mean, std = self.linear_combination(mean, std, style_mean, style_std)
       x_patched = self.norm_layer2(x_patched, mean, std)
     else:
       x_patched = self.norm_layer2(x_patched)
@@ -303,4 +283,5 @@ class CANetLayer(L.LightningModule):
     x_patched = self.icb(x_patched)
 
     out: Tensor = x_patched_style + self.drop_path(x_patched)
+
     return out
