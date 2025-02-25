@@ -8,8 +8,8 @@ from timm.models.layers import DropPath, trunc_normal_
 from torch import Tensor
 
 from config.canet_config import TrainConfig
-from layers.dain import DAIN_Layer
-from layers.positional_encoding import positional_encoding
+from canet.layers.dain import DAIN_Layer
+from canet.layers.positional_encoding import positional_encoding
 
 
 class StyleBlendGate(L.LightningModule):
@@ -29,7 +29,9 @@ class StyleBlendGate(L.LightningModule):
     self.mean_linear = nn.Linear(self.embed_dim, self.embed_dim)
     self.std_linear = nn.Linear(self.embed_dim, self.embed_dim)
 
-  def forward(self, mean_style1: Tensor, std_style1: Tensor, mean_style2: Tensor, std_style2: Tensor) -> Tuple[Tensor, Tensor]:
+  def forward(
+    self, mean_style1: Tensor, std_style1: Tensor, mean_style2: Tensor, std_style2: Tensor
+  ) -> Tuple[Tensor, Tensor]:
     if self.affine:
       mean_style1 = mean_style1 * self.mean_shift_style1
       mean_style2 = mean_style2 * self.mean_shift_style2
@@ -156,7 +158,9 @@ class AdaptiveSpectralBlock(L.LightningModule):
     # Normalize energy
     normalized_energy = energy / (median_energy + 1e-6)
 
-    adaptive_mask = ((normalized_energy > self.threshold_param).float() - self.threshold_param).detach() + self.threshold_param
+    adaptive_mask = (
+      (normalized_energy > self.threshold_param).float() - self.threshold_param
+    ).detach() + self.threshold_param
     adaptive_mask = adaptive_mask.unsqueeze(-1)
 
     return adaptive_mask
@@ -200,7 +204,9 @@ class CANetLayer(L.LightningModule):
 
     self.patchifier = Patchifier(self.config.seq_len, self.patch_size)
 
-    self.positional_encoding: Tensor = positional_encoding(pe="exp2d", learn_pe=True, q_len=self.patchifier.num_patches, d_model=self.patchifier.patch_size)
+    self.positional_encoding: Tensor = positional_encoding(
+      pe="exp2d", learn_pe=True, q_len=self.patchifier.num_patches, d_model=self.patchifier.patch_size
+    )
 
     self.input_layer1 = nn.Linear(self.patch_size, self.config.embed_dim)
     self.drop1 = nn.Dropout(self.config.dropout_rate)
@@ -210,7 +216,9 @@ class CANetLayer(L.LightningModule):
 
     if self.config.first_norm_layer == "adain" or self.config.second_norm_layer == "adain":
       self.mean_std_proj = MeanStdProjector(self.config.embed_dim, self.config.dropout_rate)
-      self.style_blend_gate = StyleBlendGate(self.config.embed_dim, self.config.blend_ratio, self.config.style_blend_gate_affine)
+      self.style_blend_gate = StyleBlendGate(
+        self.config.embed_dim, self.config.blend_ratio, self.config.style_blend_gate_affine
+      )
 
     # First Normalization Layer
     if self.config.first_norm_layer == "adain":
@@ -239,9 +247,13 @@ class CANetLayer(L.LightningModule):
     self.asb = AdaptiveSpectralBlock(self.config.embed_dim)
 
     self.mlp_hidden_dim = int(self.config.embed_dim * self.mlp_ratio)
-    self.icb = InteractiveConvolutionalBlock(self.config.embed_dim, self.config.embed_dim, drop=self.config.dropout_rate)
+    self.icb = InteractiveConvolutionalBlock(
+      self.config.embed_dim, self.config.embed_dim, drop=self.config.dropout_rate
+    )
 
-    self.drop_path: DropPath | nn.Identity = DropPath(self.drop_path_ratio) if self.drop_path_ratio > 0.0 else nn.Identity()
+    self.drop_path: DropPath | nn.Identity = (
+      DropPath(self.drop_path_ratio) if self.drop_path_ratio > 0.0 else nn.Identity()
+    )
 
   def forward(self, x: Tensor, mean: Tensor, std: Tensor) -> Tensor:
     x = rearrange(x, "b l m -> b m l")

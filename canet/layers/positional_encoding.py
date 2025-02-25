@@ -1,12 +1,15 @@
+import math
+from typing import Callable
+
 import torch
 import torch.nn as nn
-import math
+from torch import Tensor
 
 
-def PositionalEncoding(q_len, d_model, normalize=False):
-  pe = torch.zeros(q_len, d_model)
-  position = torch.arange(0, q_len).unsqueeze(1)
-  div_term = torch.exp(torch.arange(0, d_model, 2) * -(math.log(10000.0) / d_model))
+def PositionalEncoding(q_len: int, d_model: int, normalize: bool = False) -> Tensor:
+  pe: Tensor = torch.zeros(q_len, d_model)
+  position: Tensor = torch.arange(0, q_len).unsqueeze(1)
+  div_term: Tensor = torch.exp(torch.arange(0, d_model, 2) * -(math.log(10000.0) / d_model))
   pe[:, 0::2] = torch.sin(position * div_term)
   pe[:, 1::2] = torch.cos(position * div_term)
   if normalize:
@@ -15,17 +18,19 @@ def PositionalEncoding(q_len, d_model, normalize=False):
   return pe
 
 
-SinCosPosEncoding = PositionalEncoding
+SinCosPosEncoding: Callable[[int, int, bool], Tensor] = PositionalEncoding
 
 
-def Coord2dPosEncoding(q_len, d_model, exponential=False, normalize=True, eps=1e-3, verbose=False):
-  x = 0.5 if exponential else 1
+def Coord2dPosEncoding(
+  q_len: int, d_model: int, exponential: bool = False, normalize: bool = True, eps: float = 1e-3, verbose: bool = False
+) -> Tensor:
+  x: float = 0.5 if exponential else 1.0
   i = 0
+  cpe: Tensor = torch.empty()
   for i in range(100):
     cpe = (
       2 * (torch.linspace(0, 1, q_len).reshape(-1, 1) ** x) * (torch.linspace(0, 1, d_model).reshape(1, -1) ** x) - 1
     )
-    # pv(f"{i:4.0f}  {x:5.3f}  {cpe.mean():+6.3f}", verbose)
     if abs(cpe.mean()) <= eps:
       break
     elif cpe.mean() > eps:
@@ -39,18 +44,18 @@ def Coord2dPosEncoding(q_len, d_model, exponential=False, normalize=True, eps=1e
   return cpe
 
 
-def Coord1dPosEncoding(q_len, exponential=False, normalize=True):
-  cpe = 2 * (torch.linspace(0, 1, q_len).reshape(-1, 1) ** (0.5 if exponential else 1)) - 1
+def Coord1dPosEncoding(q_len: int, exponential: bool = False, normalize: bool = True) -> Tensor:
+  cpe: Tensor = 2 * (torch.linspace(0, 1, q_len).reshape(-1, 1) ** (0.5 if exponential else 1)) - 1
   if normalize:
     cpe = cpe - cpe.mean()
     cpe = cpe / (cpe.std() * 10)
   return cpe
 
 
-def positional_encoding(pe, learn_pe, q_len, d_model):
+def positional_encoding(pe: str | None, learn_pe: bool, q_len: int, d_model: int) -> Tensor:
   # Positional encoding
-  if pe == None:
-    W_pos = torch.empty((q_len, d_model))  # pe = None and learn_pe = False can be used to measure impact of pe
+  if pe is None:
+    W_pos: Tensor = torch.empty((q_len, d_model))
     nn.init.uniform_(W_pos, -0.02, 0.02)
     learn_pe = False
   elif pe == "zero":
@@ -76,17 +81,18 @@ def positional_encoding(pe, learn_pe, q_len, d_model):
   elif pe == "sincos":
     W_pos = PositionalEncoding(q_len, d_model, normalize=True)
   else:
-    raise ValueError(f"{pe} is not a valid pe (positional encoder. Available types: 'gauss'=='normal', \
-        'zeros', 'zero', uniform', 'lin1d', 'exp1d', 'lin2d', 'exp2d', 'sincos', None.)")
+    raise ValueError(
+      f"{pe} is not a valid pe (positional encoder. Available types: 'gauss'=='normal', \
+        'zeros', 'zero', uniform', 'lin1d', 'exp1d', 'lin2d', 'exp2d', 'sincos', None.)"
+    )
   return nn.Parameter(W_pos, requires_grad=learn_pe)
 
 
-def main():
-  # demo
-  pe = positional_encoding("sincos", True, 384, 64)
+def demo():
+  pe: Tensor = positional_encoding("sincos", True, 384, 64)
   pe = pe.unsqueeze(0)
   print(pe.shape)
 
 
 if __name__ == "__main__":
-  main()
+  demo()
