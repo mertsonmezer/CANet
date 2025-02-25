@@ -12,7 +12,7 @@ from canet.layers.dain import DAIN_Layer
 from canet.layers.positional_encoding import positional_encoding
 
 
-class StyleBlendGate(L.LightningModule):
+class StyleBlendingGate(L.LightningModule):
   def __init__(self, embed_dim: int, blend_ratio: float = 0.1, affine: bool = True):
     super().__init__()
     self.embed_dim: int = embed_dim
@@ -118,16 +118,16 @@ class InteractiveConvolutionalBlock(L.LightningModule):
 
   def forward(self, x: Tensor) -> Tensor:
     x = x.transpose(1, 2)
-    x1 = self.conv1(x)
-    x1_1 = self.act(x1)
-    x1_2 = self.drop(x1_1)
+    x1: Tensor = self.conv1(x)
+    x1_1: Tensor = self.act(x1)
+    x1_2: Tensor = self.drop(x1_1)
 
-    x2 = self.conv2(x)
-    x2_1 = self.act(x2)
-    x2_2 = self.drop(x2_1)
+    x2: Tensor = self.conv2(x)
+    x2_1: Tensor = self.act(x2)
+    x2_2: Tensor = self.drop(x2_1)
 
-    out1 = x1 * x2_2
-    out2 = x2 * x1_2
+    out1: Tensor = x1 * x2_2
+    out2: Tensor = x2 * x1_2
 
     x = self.conv3(out1 + out2)
     x = x.transpose(1, 2)
@@ -148,17 +148,17 @@ class AdaptiveSpectralBlock(L.LightningModule):
     B, _, _ = x_fft.shape
 
     # Calculate energy in the frequency domain
-    energy = torch.abs(x_fft).pow(2).sum(dim=-1)
+    energy: Tensor = torch.abs(x_fft).pow(2).sum(dim=-1)
 
     # Flatten energy across H and W dimensions and then compute median
-    flat_energy = energy.view(B, -1)  # Flattening H and W into a single dimension
-    median_energy = flat_energy.median(dim=1, keepdim=True)[0]  # Compute median
+    flat_energy: Tensor = energy.view(B, -1)  # Flattening H and W into a single dimension
+    median_energy: Tensor = flat_energy.median(dim=1, keepdim=True)[0]  # Compute median
     median_energy = median_energy.view(B, 1)  # Reshape to match the original dimensions
 
     # Normalize energy
-    normalized_energy = energy / (median_energy + 1e-6)
+    normalized_energy: Tensor = energy / (median_energy + 1e-6)
 
-    adaptive_mask = (
+    adaptive_mask: Tensor = (
       (normalized_energy > self.threshold_param).float() - self.threshold_param
     ).detach() + self.threshold_param
     adaptive_mask = adaptive_mask.unsqueeze(-1)
@@ -172,21 +172,21 @@ class AdaptiveSpectralBlock(L.LightningModule):
     x = x_in.to(torch.float32)
 
     # Apply FFT along the time dimension
-    x_fft = torch.fft.rfft(x, dim=1, norm="ortho")
-    weight = torch.view_as_complex(self.complex_weight)
-    x_weighted = x_fft * weight
+    x_fft: Tensor = torch.fft.rfft(x, dim=1, norm="ortho")
+    weight: Tensor = torch.view_as_complex(self.complex_weight)
+    x_weighted: Tensor = x_fft * weight
 
     # Adaptive High Frequency Mask (no need for dimensional adjustments)
-    freq_mask = self.create_adaptive_high_freq_mask(x_fft)
-    x_masked = x_fft * freq_mask.to(x.device)
+    freq_mask: Tensor = self.create_adaptive_high_freq_mask(x_fft)
+    x_masked: Tensor = x_fft * freq_mask.to(x.device)
 
-    weight_high = torch.view_as_complex(self.complex_weight_high)
-    x_weighted2 = x_masked * weight_high
+    weight_high: Tensor = torch.view_as_complex(self.complex_weight_high)
+    x_weighted2: Tensor = x_masked * weight_high
 
     x_weighted += x_weighted2
 
     # Apply Inverse FFT
-    x = torch.fft.irfft(x_weighted, n=N, dim=1, norm="ortho")
+    x: Tensor = torch.fft.irfft(x_weighted, n=N, dim=1, norm="ortho")
 
     x = x.to(dtype)
     x = x.view(B, N, C)  # Reshape back to original shape
@@ -216,7 +216,7 @@ class CANetLayer(L.LightningModule):
 
     if self.config.first_norm_layer == "adain" or self.config.second_norm_layer == "adain":
       self.mean_std_proj = MeanStdProjector(self.config.embed_dim, self.config.dropout_rate)
-      self.style_blend_gate = StyleBlendGate(
+      self.style_blending_gate = StyleBlendingGate(
         self.config.embed_dim, self.config.blend_ratio, self.config.style_blend_gate_affine
       )
 
@@ -278,7 +278,7 @@ class CANetLayer(L.LightningModule):
 
     if self.config.first_norm_layer == "adain":
       mean, std = self.mean_std_proj(mean, std)
-      mean, std = self.style_blend_gate(mean, std, style_mean, style_std)
+      mean, std = self.style_blending_gate(mean, std, style_mean, style_std)
       x_patched = self.norm_layer1(x_patched, mean, std)
     else:
       x_patched = self.norm_layer1(x_patched)
@@ -287,7 +287,7 @@ class CANetLayer(L.LightningModule):
 
     if self.config.second_norm_layer == "adain":
       mean, std = self.mean_std_proj(mean, std)
-      mean, std = self.style_blend_gate(mean, std, style_mean, style_std)
+      mean, std = self.style_blending_gate(mean, std, style_mean, style_std)
       x_patched = self.norm_layer2(x_patched, mean, std)
     else:
       x_patched = self.norm_layer2(x_patched)
