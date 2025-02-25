@@ -7,10 +7,9 @@ from torch import Tensor, nn, optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
 
+from canet.layers.canet_layers import CANetLayer
+from canet.layers.sklinear import SKLinear
 from config.canet_config import TrainConfig
-from layers.canet_layers import CANetLayer
-from layers.revin import RevIN
-from layers.sklinear import SKLinear
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -20,10 +19,8 @@ class CANet(L.LightningModule):
     super().__init__()
     self.config: TrainConfig = config
 
-    self.revin_layer = RevIN(self.config.data_config.num_channels)
-    self.layer_norm = nn.LayerNorm(self.config.data_config.num_channels)
-
     drop_path_ratios: List[float] = [x.item() for x in torch.linspace(0, 0.5, self.config.depth)]
+
     self.net_layers = nn.ModuleList(
       [
         CANetLayer(
@@ -37,15 +34,14 @@ class CANet(L.LightningModule):
 
     total_num_pathes: int = sum(layer.patchifier.num_patches for layer in self.net_layers)
 
-    if self.config.use_rank_reduction:
-      self.fc1 = SKLinear(self.config.embed_dim * total_num_pathes, self.config.output_features, scale=0.5)
-
-    else:
-      self.fc1 = nn.Linear(self.config.embed_dim * total_num_pathes, self.config.output_features)
-
+    # Optional rank-reducing projection using Stacked Kronecker Product Layer.
+    self.fc1: SKLinear | nn.Linear = (
+      SKLinear(self.config.embed_dim * total_num_pathes, self.config.output_features, scale=0.5)
+      if self.config.use_rank_reduction
+      else nn.Linear(self.config.embed_dim * total_num_pathes, self.config.output_features)
+    )
     self.drop = nn.Dropout(self.config.dropout_rate)
     self.relu = nn.ReLU()
-
     self.fc2 = nn.Linear(self.config.output_features, self.config.pred_len)
 
   def forward(self, x: Tensor) -> Tensor:
@@ -54,7 +50,7 @@ class CANet(L.LightningModule):
     # Instance Normalization
     mean: Tensor = x.mean(dim=1, keepdim=True)
     std: Tensor = x.std(dim=1, keepdim=True)
-    eps = 1e-5
+    eps: float = 1e-5
     x = (x - mean) / (std + eps)
 
     xs_patched: List[Tensor] = []
@@ -64,7 +60,6 @@ class CANet(L.LightningModule):
       xs_patched.append(x_patched)
 
     x_concat: Tensor = torch.cat(xs_patched, dim=1)
-
     x_concat = self.fc1(x_concat)
     x_concat = self.drop(x_concat)
     x_concat = self.relu(x_concat)
@@ -124,7 +119,6 @@ class TrainedCANet(L.LightningModule):
     mse: Tensor = self.mse(pred.contiguous(), true.contiguous())
     mae: Tensor = self.mae(pred, true)
 
-    # Logging for both step and epoch
     self.log(
       f"{mode}_loss",
       loss,
