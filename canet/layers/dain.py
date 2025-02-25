@@ -1,3 +1,11 @@
+"""
+This code is adapted from the following repository:
+https://github.com/passalis/dain
+
+The repository contains the implementation of the paper:
+"Deep Adaptive Input Normalization for Time Series Forecasting"
+"""
+
 import torch
 import torch.nn as nn
 import numpy as np
