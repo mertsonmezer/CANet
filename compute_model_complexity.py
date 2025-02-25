@@ -1,4 +1,4 @@
-from models.canet import TrainedCANet
+from canet.canet import TrainedCANet
 import torch
 import time
 from data.data_factory import data_provider
