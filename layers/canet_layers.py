@@ -7,7 +7,7 @@ from einops import rearrange
 from timm.models.layers import DropPath, trunc_normal_
 from torch import Tensor
 
-from config.net_config import TrainConfig
+from config.canet_config import TrainConfig
 from layers.dain import DAIN_Layer
 from layers.positional_encoding import positional_encoding
 

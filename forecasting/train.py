@@ -9,7 +9,7 @@ import torch
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, TQDMProgressBar
 from torch.utils.data import DataLoader
 
-from config.net_config import DataConfig, TrainConfig
+from config.canet_config import DataConfig, TrainConfig
 from data.data_factory import data_provider
 from models.canet import TrainedCANet
 from utils.utils import list_of_ints, str2bool

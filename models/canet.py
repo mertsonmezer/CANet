@@ -7,7 +7,7 @@ from torch import Tensor, nn, optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
 
-from config.net_config import TrainConfig
+from config.canet_config import TrainConfig
 from layers.canet_layers import CANetLayer
 from layers.revin import RevIN
 from layers.sklinear import SKLinear

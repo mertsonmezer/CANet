@@ -1,6 +1,6 @@
 from data.data_loader import Dataset_ETT_hour, Dataset_ETT_minute, Dataset_Custom
 from torch.utils.data import DataLoader
-from config.net_config import TrainConfig
+from config.canet_config import TrainConfig
 
 data_dict = {
   "ETTh1": Dataset_ETT_hour,

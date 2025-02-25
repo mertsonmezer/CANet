@@ -15,7 +15,7 @@ from optuna.trial._frozen import FrozenTrial
 from optuna.samplers import TPESampler
 from torch.utils.data import DataLoader
 
-from config.net_config import DataConfig, TrainConfig
+from config.canet_config import DataConfig, TrainConfig
 from data.data_factory import data_provider
 from models.canet import TrainedCANet
 from utils.utils import str2bool
