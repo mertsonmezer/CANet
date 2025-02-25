@@ -1,9 +1,19 @@
+"""
+The code is adapted from the following source:
+https://catid.io/posts/low_rank/
+
+It contains the implementation of the Stacked Kronecker Product Layer intorduced in the paper:
+"Shapeshifter: a Parameter-efficient Transformer using Factorized Reshaped Matrices"
+"""
+
 import math
+
 import torch
 import torch.nn as nn
+from torch import Tensor
 
 
-def round_up_sqrt(m):
+def round_up_sqrt(m: int) -> int:
   sm = int(m**0.5 + 0.5)
   while sm * sm > m:
     sm -= 1
@@ -12,19 +22,16 @@ def round_up_sqrt(m):
   return sm
 
 
-# Stacked Kronecker-product Layers https://openreview.net/pdf?id=ZjGr1tMVbjw
-# Uses 2r*sqrt(nm) parameters instead of nm.
-# For for n=512 x m=2048, r must be 256 or less to make it worthwhile.
 class SKLinear(nn.Module):
-  def __init__(self, n, m, scale=0.5):
+  def __init__(self, n: int, m: int, scale: float = 0.5):
     super().__init__()
-    self.n = n
-    self.m = m
-    self.sn = round_up_sqrt(n)
-    self.np = self.sn * self.sn  # n rounded up to next square
-    self.sm = round_up_sqrt(m)
-    self.mp = self.sm * self.sm  # m rounded up to next square
-    k = self.sn * self.sm
+    self.n: int = n
+    self.m: int = m
+    self.sn: int = round_up_sqrt(n)
+    self.np: int = self.sn * self.sn  # n rounded up to next square
+    self.sm: int = round_up_sqrt(m)
+    self.mp: int = self.sm * self.sm  # m rounded up to next square
+    k: int = self.sn * self.sm
 
     r = int(scale * (n * m) / 2.0 / k + 0.5)
 
@@ -38,14 +45,14 @@ class SKLinear(nn.Module):
     self.B = nn.Parameter(torch.empty(r, k))
     nn.init.kaiming_uniform_(self.B, a=math.sqrt(5))
 
-  def forward(self, x):
+  def forward(self, x: Tensor):
     # Validate that the inputs are of the expected sizes
     if x.size(-1) != self.n:
       raise ValueError("Input vector must have size n")
 
-    S = (
+    S: Tensor = (
       torch.matmul(self.A, self.B).reshape(self.sn, self.sm, self.sn, self.sm).transpose(1, 2).reshape(self.np, self.mp)
     )
-    S_truncated = S[: self.n, : self.m]
+    S_truncated: Tensor = S[: self.n, : self.m]
 
     return torch.matmul(x, S_truncated)
