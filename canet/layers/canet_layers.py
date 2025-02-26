@@ -1,81 +1,15 @@
-from typing import Tuple
-
 import lightning as L
-import torch
 import torch.nn as nn
 from einops import rearrange
-from timm.models.layers import DropPath, trunc_normal_
+from timm.models.layers import DropPath
 from torch import Tensor
 
-from config.canet_config import TrainConfig
+from canet.layers.asb import AdaptiveSpectralBlock
 from canet.layers.dain import DAIN_Layer
+from canet.layers.icb import InteractiveConvolutionalBlock
+from canet.layers.nsan import AdaIN, MeanStdProjector, StyleBlendingGate
 from canet.layers.positional_encoding import positional_encoding
-
-
-class StyleBlendingGate(L.LightningModule):
-  def __init__(self, embed_dim: int, blend_ratio: float = 0.1, affine: bool = True):
-    super().__init__()
-    self.embed_dim: int = embed_dim
-    self.blend_ratio: float = blend_ratio
-    self.affine: bool = affine
-
-    if self.affine:
-      self.mean_shift_style1 = nn.Parameter(torch.zeros(1, 1, embed_dim))
-      self.mean_shift_style2 = nn.Parameter(torch.zeros(1, 1, embed_dim))
-
-      self.std_scale_style1 = nn.Parameter(torch.ones(1, 1, embed_dim))
-      self.std_scale_style2 = nn.Parameter(torch.ones(1, 1, embed_dim))
-
-    self.mean_linear = nn.Linear(self.embed_dim, self.embed_dim)
-    self.std_linear = nn.Linear(self.embed_dim, self.embed_dim)
-
-  def forward(
-    self, mean_style1: Tensor, std_style1: Tensor, mean_style2: Tensor, std_style2: Tensor
-  ) -> Tuple[Tensor, Tensor]:
-    if self.affine:
-      mean_style1 = mean_style1 * self.mean_shift_style1
-      mean_style2 = mean_style2 * self.mean_shift_style2
-      std_style1 = std_style1 * self.std_scale_style1
-      std_style2 = std_style2 * self.std_scale_style2
-
-    mean: Tensor = self.blend_ratio * mean_style1 + (1 - self.blend_ratio) * mean_style2
-    std: Tensor = self.blend_ratio * std_style1 + (1 - self.blend_ratio) * std_style2
-
-    mean_shifted: Tensor = self.mean_linear(mean)
-    std_scaled: Tensor = self.std_linear(std)
-
-    return mean_shifted, std_scaled
-
-
-class MeanStdProjector(L.LightningModule):
-  def __init__(self, embed_dim: int, dropout_rate: float):
-    super().__init__()
-
-    self.embed_dim: int = embed_dim
-
-    self.mean_proj = nn.Linear(1, self.embed_dim)
-    self.mean_drop = nn.Dropout(dropout_rate)
-
-    self.std_proj = nn.Linear(1, self.embed_dim)
-    self.std_drop = nn.Dropout(dropout_rate)
-
-  def forward(self, mean: Tensor, std: Tensor) -> Tuple[Tensor, Tensor]:
-    mean = rearrange(mean, "b l m -> b m l")
-    std = rearrange(std, "b l m -> b m l")
-
-    mean = mean.unsqueeze(-1)
-    std = std.unsqueeze(-1)
-
-    mean = rearrange(mean, "b m n p -> (b m) n p")
-    std = rearrange(std, "b m n p -> (b m) n p")
-
-    mean = self.mean_proj(mean)
-    mean = self.mean_drop(mean)
-
-    std = self.std_proj(std)
-    std = self.std_drop(std)
-
-    return mean, std
+from config.canet_config import TrainConfig
 
 
 class Patchifier(L.LightningModule):
@@ -88,110 +22,6 @@ class Patchifier(L.LightningModule):
   def forward(self, x: Tensor) -> Tensor:
     x_patched: Tensor = x.unfold(dimension=-1, size=self.patch_size, step=self.stride)
     return x_patched
-
-
-class AdaIN(L.LightningModule):
-  def __init__(self):
-    super().__init__()
-    self.eps = 1e-5
-
-  def forward(self, x: Tensor, style_mean: Tensor, style_std: Tensor) -> Tensor:
-    mean_x: Tensor = torch.mean(x, dim=1, keepdim=True).detach()
-
-    std_x: Tensor = torch.std(x, dim=1, keepdim=True).detach()
-    std_x += self.eps
-
-    normalized_x: Tensor = (x - mean_x) / std_x
-    out: Tensor = normalized_x * style_std + style_mean
-
-    return out
-
-
-class InteractiveConvolutionalBlock(L.LightningModule):
-  def __init__(self, in_features: int, hidden_features: int, drop: float = 0.0):
-    super().__init__()
-    self.conv1 = nn.Conv1d(in_features, hidden_features, 1)
-    self.conv2 = nn.Conv1d(in_features, hidden_features, 3, 1, padding=1)
-    self.conv3 = nn.Conv1d(hidden_features, in_features, 1)
-    self.drop = nn.Dropout(drop)
-    self.act = nn.GELU()
-
-  def forward(self, x: Tensor) -> Tensor:
-    x = x.transpose(1, 2)
-    x1: Tensor = self.conv1(x)
-    x1_1: Tensor = self.act(x1)
-    x1_2: Tensor = self.drop(x1_1)
-
-    x2: Tensor = self.conv2(x)
-    x2_1: Tensor = self.act(x2)
-    x2_2: Tensor = self.drop(x2_1)
-
-    out1: Tensor = x1 * x2_2
-    out2: Tensor = x2 * x1_2
-
-    x = self.conv3(out1 + out2)
-    x = x.transpose(1, 2)
-    return x
-
-
-class AdaptiveSpectralBlock(L.LightningModule):
-  def __init__(self, dim: int):
-    super().__init__()
-    self.complex_weight_high = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * 0.02)
-    self.complex_weight = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * 0.02)
-
-    trunc_normal_(self.complex_weight_high, std=0.02)
-    trunc_normal_(self.complex_weight, std=0.02)
-    self.threshold_param = nn.Parameter(torch.rand(1))  # * 0.5)
-
-  def create_adaptive_high_freq_mask(self, x_fft: Tensor):
-    B, _, _ = x_fft.shape
-
-    # Calculate energy in the frequency domain
-    energy: Tensor = torch.abs(x_fft).pow(2).sum(dim=-1)
-
-    # Flatten energy across H and W dimensions and then compute median
-    flat_energy: Tensor = energy.view(B, -1)  # Flattening H and W into a single dimension
-    median_energy: Tensor = flat_energy.median(dim=1, keepdim=True)[0]  # Compute median
-    median_energy = median_energy.view(B, 1)  # Reshape to match the original dimensions
-
-    # Normalize energy
-    normalized_energy: Tensor = energy / (median_energy + 1e-6)
-
-    adaptive_mask: Tensor = (
-      (normalized_energy > self.threshold_param).float() - self.threshold_param
-    ).detach() + self.threshold_param
-    adaptive_mask = adaptive_mask.unsqueeze(-1)
-
-    return adaptive_mask
-
-  def forward(self, x_in: Tensor) -> Tensor:
-    B, N, C = x_in.shape
-
-    dtype = x_in.dtype
-    x = x_in.to(torch.float32)
-
-    # Apply FFT along the time dimension
-    x_fft: Tensor = torch.fft.rfft(x, dim=1, norm="ortho")
-    weight: Tensor = torch.view_as_complex(self.complex_weight)
-    x_weighted: Tensor = x_fft * weight
-
-    # Adaptive High Frequency Mask (no need for dimensional adjustments)
-    freq_mask: Tensor = self.create_adaptive_high_freq_mask(x_fft)
-    x_masked: Tensor = x_fft * freq_mask.to(x.device)
-
-    weight_high: Tensor = torch.view_as_complex(self.complex_weight_high)
-    x_weighted2: Tensor = x_masked * weight_high
-
-    x_weighted += x_weighted2
-
-    # Apply Inverse FFT
-    x: Tensor = torch.fft.irfft(x_weighted, n=N, dim=1, norm="ortho")
-
-    x = x.to(dtype)
-    x = x.view(B, N, C)  # Reshape back to original shape
-
-    return x
 
 
 class CANetLayer(L.LightningModule):
