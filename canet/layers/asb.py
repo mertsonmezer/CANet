@@ -13,9 +13,9 @@ class AdaptiveSpectralBlock(L.LightningModule):
 
     trunc_normal_(self.complex_weight_high, std=0.02)
     trunc_normal_(self.complex_weight, std=0.02)
-    self.threshold_param = nn.Parameter(torch.rand(1))  # * 0.5)
+    self.threshold_param = nn.Parameter(torch.rand(1))
 
-  def create_adaptive_high_freq_mask(self, x_fft: Tensor):
+  def create_adaptive_high_freq_mask(self, x_fft: Tensor) -> Tensor:
     B, _, _ = x_fft.shape
 
     # Calculate energy in the frequency domain

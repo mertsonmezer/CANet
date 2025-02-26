@@ -24,6 +24,7 @@ def round_up_sqrt(m: int) -> int:
 
 class SKLinear(nn.Module):
   def __init__(self, n: int, m: int, scale: float = 0.5):
+    torch.manual_seed(42)
     super().__init__()
     self.n: int = n
     self.m: int = m

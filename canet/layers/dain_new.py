@@ -1,11 +1,13 @@
 from typing import Literal
+
+import lightning as L
 import numpy as np
 import torch
 import torch.nn as nn
 from torch import Tensor
 
 
-class DAIN(nn.Module):
+class DAIN(L.LightningModule):
   def __init__(
     self,
     mode: Literal["avg", "adaptive_avg", "adaptive_scale", "full", None] = "full",
@@ -126,7 +128,10 @@ def demo():
   dain = DAIN(mode=mode, input_dim=dimension)
   output: Tensor = dain(input)
 
-  print(f"Normalized tensor shape: {output.shape}")
+  # Print shapes and sample output
+  print(f"Input shape: {input.shape}")
+  print(f"Output shape: {output.shape}")
+  print(f"Sample output:\n{output}")
 
 
 if __name__ == "__main__":

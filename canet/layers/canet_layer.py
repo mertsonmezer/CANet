@@ -8,20 +8,9 @@ from canet.layers.asb import AdaptiveSpectralBlock
 from canet.layers.dain import DAIN_Layer
 from canet.layers.icb import InteractiveConvolutionalBlock
 from canet.layers.nsan import AdaIN, MeanStdProjector, StyleBlendingGate
+from canet.layers.patchifier import Patchifier
 from canet.layers.positional_encoding import positional_encoding
 from config.canet_config import CANetTrainConfig
-
-
-class Patchifier(L.LightningModule):
-  def __init__(self, sequence_length: int, patch_size: int):
-    super().__init__()
-    self.patch_size: int = patch_size
-    self.stride: int = self.patch_size // 2
-    self.num_patches = int((sequence_length - self.patch_size) / self.stride + 1)
-
-  def forward(self, x: Tensor) -> Tensor:
-    x_patched: Tensor = x.unfold(dimension=-1, size=self.patch_size, step=self.stride)
-    return x_patched
 
 
 class CANetLayer(L.LightningModule):
