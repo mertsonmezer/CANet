@@ -1,4 +1,5 @@
-## CANet: ChronoAdaptive Network for Long-term Time Series Forecasting [Paper] [Cite]
+<h2> <p align="center"> CANet: ChronoAdaptive Network for Long-term Time Series Forecasting [Paper] [<a href="#citation">Cite</a>]
+</p> </h2>
 
 _**by: Sonmezer, M. & Ertekin, S.**_
 
@@ -15,7 +16,7 @@ Datasets used during the experiments can be obtained from the following reposito
 ### Citation
 ---
 If you found this work useful, please consider citing it:
-```
+```bibtex
 @article{canet2025,
   title     = {CANet: ChronoAdaptive Network for Long-term Time Series Forecasting},
   author    = {Mert Sonmezer and Seyda Ertekin},
