@@ -1,20 +1,22 @@
 import lightning as L
+import torch
 import torch.nn as nn
 from einops import rearrange
 from timm.models.layers import DropPath
 from torch import Tensor
 
 from canet.layers.asb import AdaptiveSpectralBlock
-from canet.layers.dain import DAIN_Layer
 from canet.layers.icb import InteractiveConvolutionalBlock
 from canet.layers.nsan import AdaIN, MeanStdProjector, StyleBlendingGate
 from canet.layers.patchifier import Patchifier
-from canet.layers.positional_encoding import positional_encoding
+from canet.layers.positional_encoding import create_positional_encoding
 from config.canet_config import CANetTrainConfig
+from canet.layers.dain import DAIN
 
 
 class CANetLayer(L.LightningModule):
   def __init__(self, patch_size: int, config: CANetTrainConfig, mlp_ratio: float = 3.0, drop_path_ratio: float = 0.0):
+    torch.manual_seed(42)  # TODO: Remove here
     super().__init__()
     self.patch_size: int = patch_size
     self.mlp_ratio: float = mlp_ratio
@@ -23,8 +25,11 @@ class CANetLayer(L.LightningModule):
 
     self.patchifier = Patchifier(self.config.seq_len, self.patch_size)
 
-    self.positional_encoding: Tensor = positional_encoding(
-      pe="exp2d", learn_pe=True, q_len=self.patchifier.num_patches, d_model=self.patchifier.patch_size
+    self.positional_encoding: Tensor = create_positional_encoding(
+      encoding_type="exp2d",
+      learnable=True,
+      sequence_length=self.patchifier.num_patches,
+      embedding_dim=self.patchifier.patch_size,
     )
 
     self.input_layer1 = nn.Linear(self.patch_size, self.config.embed_dim)
@@ -49,7 +54,7 @@ class CANetLayer(L.LightningModule):
     elif self.config.first_norm_layer == "instance":
       self.norm_layer1 = nn.InstanceNorm1d(self.patchifier.num_patches)
     elif self.config.first_norm_layer == "dain":
-      self.norm_layer1 = DAIN_Layer(mode="full", input_dim=self.patchifier.num_patches)
+      self.norm_layer1 = DAIN(mode="full", input_dim=self.patchifier.num_patches)
 
     # Second Normalization Layer
     if self.config.second_norm_layer == "adain":
@@ -61,7 +66,7 @@ class CANetLayer(L.LightningModule):
     elif self.config.second_norm_layer == "instance":
       self.norm_layer2 = nn.InstanceNorm1d(self.patchifier.num_patches)
     elif self.config.second_norm_layer == "dain":
-      self.norm_layer2 = DAIN_Layer(mode="full", input_dim=self.patchifier.num_patches)
+      self.norm_layer2 = DAIN(mode="full", input_dim=self.patchifier.num_patches)
 
     self.asb = AdaptiveSpectralBlock(self.config.embed_dim)
 
@@ -116,3 +121,40 @@ class CANetLayer(L.LightningModule):
     out: Tensor = x_patched_style + self.drop_path(x_patched)
 
     return out
+
+
+def demo():
+  import torch
+
+  # Define dummy config
+  config = CANetTrainConfig(
+    seq_len=336,
+    embed_dim=32,
+    dropout_rate=0.5,
+    first_norm_layer="layer",
+    second_norm_layer="adain",
+    blend_ratio=0.1,
+    style_blend_gate_affine=True,
+  )
+
+  # Initialize model
+  patch_size: int = 16
+  canet_layer = CANetLayer(patch_size, config)
+
+  # Generate dummy inputs
+  batch_size: int = 128
+  num_channels: int = 7
+  seq_len: int = config.seq_len
+
+  input: Tensor = torch.randn(batch_size, seq_len, num_channels)  # Input sequence
+  mean: Tensor = input.mean(dim=1, keepdim=True)  # Mean tensor
+  std: Tensor = input.std(dim=1, keepdim=True)  # Std tensor
+
+  output: Tensor = canet_layer(input, mean, std)
+
+  print(f"Input shape: {input.shape}")
+  print(f"Output shape: {output.shape}")
+
+
+if __name__ == "__main__":
+  demo()

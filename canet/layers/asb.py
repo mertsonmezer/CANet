@@ -7,6 +7,7 @@ from torch import Tensor
 
 class AdaptiveSpectralBlock(L.LightningModule):
   def __init__(self, dim: int):
+    torch.manual_seed(42)  # TODO: Remove here
     super().__init__()
     self.complex_weight_high = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * 0.02)
     self.complex_weight = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * 0.02)

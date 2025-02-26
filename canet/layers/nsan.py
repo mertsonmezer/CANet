@@ -9,6 +9,7 @@ from torch import Tensor
 
 class StyleBlendingGate(L.LightningModule):
   def __init__(self, embed_dim: int, blend_ratio: float = 0.1, affine: bool = True):
+    torch.manual_seed(42)  # TODO: Remove here
     super().__init__()
     self.embed_dim: int = embed_dim
     self.blend_ratio: float = blend_ratio
@@ -44,15 +45,16 @@ class StyleBlendingGate(L.LightningModule):
 
 class MeanStdProjector(L.LightningModule):
   def __init__(self, embed_dim: int, dropout_rate: float):
+    torch.manual_seed(42)  # TODO: Remove here
     super().__init__()
 
     self.embed_dim: int = embed_dim
 
     self.mean_proj = nn.Linear(1, self.embed_dim)
-    self.mean_drop = nn.Dropout(dropout_rate)
+    # self.mean_drop = nn.Dropout(dropout_rate)  # TODO: Uncomment here
 
     self.std_proj = nn.Linear(1, self.embed_dim)
-    self.std_drop = nn.Dropout(dropout_rate)
+    # self.std_drop = nn.Dropout(dropout_rate)  # TODO: Uncomment here
 
   def forward(self, mean: Tensor, std: Tensor) -> Tuple[Tensor, Tensor]:
     mean = rearrange(mean, "b l m -> b m l")
@@ -65,16 +67,17 @@ class MeanStdProjector(L.LightningModule):
     std = rearrange(std, "b m n p -> (b m) n p")
 
     mean = self.mean_proj(mean)
-    mean = self.mean_drop(mean)
+    # mean = self.mean_drop(mean)  # TODO: Uncomment here
 
     std = self.std_proj(std)
-    std = self.std_drop(std)
+    # std = self.std_drop(std)  # TODO: Uncomment here
 
     return mean, std
 
 
 class AdaIN(L.LightningModule):
   def __init__(self):
+    torch.manual_seed(42)  # TODO: Remove here
     super().__init__()
     self.eps = 1e-5
 
