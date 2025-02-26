@@ -26,7 +26,6 @@ def Coord2dPosEncoding(
 ) -> Tensor:
   x: float = 0.5 if exponential else 1.0
   i = 0
-  cpe: Tensor = torch.empty()
   for i in range(100):
     cpe = (
       2 * (torch.linspace(0, 1, q_len).reshape(-1, 1) ** x) * (torch.linspace(0, 1, d_model).reshape(1, -1) ** x) - 1
