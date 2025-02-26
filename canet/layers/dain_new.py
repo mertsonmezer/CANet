@@ -16,18 +16,6 @@ class DAIN(L.LightningModule):
     scale_lr: float = 1e-5,
     input_dim: int = 144,
   ):
-    """
-    Initialize the DAIN with given parameters.
-
-    Args:
-      mode (Literal): The mode of normalization. Defaults to "full".
-        Available options: 'avg', 'adaptive_avg', 'adaptive_scale', 'full',
-        None
-      mean_lr (float): Learning rate for the mean layer. Defaults to 1e-5.
-      gate_lr (float): Learning rate for the gating layer. Defaults to 1e-3.
-      scale_lr (float): Learning rate for the scaling layer. Defaults to 1e-5.
-      input_dim (int): The dimensionality of the input data. Defaults to 144.
-    """
     super().__init__()
 
     self.mode: Literal["avg", "adaptive_avg", "adaptive_scale", "full", None] = mode
@@ -49,16 +37,7 @@ class DAIN(L.LightningModule):
     # Small epsilon value for numerical stability
     self.eps = 1e-8
 
-  def forward(self, x: Tensor):
-    """
-    Forward pass for the DAIN layer.
-
-    Args:
-      x (Tensor): Input tensor with shape (n_samples, dim, n_feature_vectors).
-
-    Returns:
-      Tensor: Normalized output tensor.
-    """
+  def forward(self, x: Tensor) -> Tensor:
     if self.mode is None:
       # Nothing to normalize
       return x

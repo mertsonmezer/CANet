@@ -1,5 +1,6 @@
 import math
 
+import lightning as L
 import torch
 import torch.nn as nn
 from torch import Tensor
@@ -25,20 +26,8 @@ def round_up_sqrt(value: int) -> int:
   return sqrt_value + (sqrt_value**2 < value)
 
 
-class StackedKroneckerProductLayer(nn.Module):
+class StackedKroneckerProductLayer(L.LightningModule):
   def __init__(self, input_dim: int, output_dim: int, scale: float = 0.5):
-    """
-    Initializes the Stacked Kronecker Product layer.
-
-    Args:
-      input_dim (int): Dimensionality of the input features.
-      output_dim (int): Dimensionality of the output features.
-      scale (float): Scaling factor for rank reduction.
-
-    Raises:
-      ValueError: If `input_dim` or `output_dim` is not positive.
-    """
-    torch.manual_seed(42)
     super().__init__()
 
     if input_dim <= 0 or output_dim <= 0:
@@ -68,18 +57,6 @@ class StackedKroneckerProductLayer(nn.Module):
     nn.init.kaiming_uniform_(self.factor_B, a=math.sqrt(5))
 
   def forward(self, x: Tensor) -> Tensor:
-    """
-    Applies the linear transformation to the input tensor.
-
-    Args:
-      x (Tensor): Input tensor of shape (batch_size, input_dim).
-
-    Returns:
-      Tensor: Transformed tensor of shape (batch_size, output_dim).
-
-    Raises:
-      ValueError: If the last dimension of `x` does not match `input_dim`.
-    """
     if x.size(-1) != self.input_dim:
       raise ValueError(f"Expected input dimension {self.input_dim}, but got {x.size(-1)}.")
 
