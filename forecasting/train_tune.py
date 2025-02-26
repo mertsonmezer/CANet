@@ -15,7 +15,7 @@ from optuna.trial._frozen import FrozenTrial
 from optuna.samplers import TPESampler
 from torch.utils.data import DataLoader
 
-from config.canet_config import DataConfig, TrainConfig
+from config.canet_config import CANetDataConfig, CANetTrainConfig
 from data.data_factory import data_provider
 from canet.canet import TrainedCANet
 from utils.utils import str2bool
@@ -31,7 +31,7 @@ PATCH_SIZES: List[List[int]] = [[8, 64]]
 EMBED_DIMS: List[int] = [64]
 
 
-def clean_trial_logs(study: optuna.Study, config: TrainConfig, logs_dir: str):
+def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: str):
   best_trial_number: int = study.best_trial.number
   print(f"Best trial is {best_trial_number}, cleaning up non-best trial directories.")
 
@@ -45,7 +45,7 @@ def clean_trial_logs(study: optuna.Study, config: TrainConfig, logs_dir: str):
 
 
 def train_model(
-  config: TrainConfig,
+  config: CANetTrainConfig,
   train_dataloader: DataLoader[torch.dtype],
   val_dataloader: DataLoader[torch.dtype],
   test_dataloader: DataLoader[torch.dtype],
@@ -87,7 +87,7 @@ def train_model(
   return model, mse_result, mae_result
 
 
-def objective(trial: optuna.trial.Trial, config: TrainConfig) -> float:
+def objective(trial: optuna.trial.Trial, config: CANetTrainConfig) -> float:
   # Suggest values for hyperparameters based on predefined ranges
   config.batch_size = trial.suggest_categorical("batch_size", BATCH_SIZES)
   config.train_lr = trial.suggest_loguniform("train_lr", LOW_LR, HIGH_LR)
@@ -104,7 +104,9 @@ def objective(trial: optuna.trial.Trial, config: TrainConfig) -> float:
   print(f"========== {run_description} ===========")
 
   checkpoint_dir_path: str = f"logs/{run_description}"
-  checkpoint_callback = ModelCheckpoint(dirpath=checkpoint_dir_path, save_top_k=1, filename="train-{epoch}", monitor="val_mse", mode="min")
+  checkpoint_callback = ModelCheckpoint(
+    dirpath=checkpoint_dir_path, save_top_k=1, filename="train-{epoch}", monitor="val_mse", mode="min"
+  )
 
   model, mse_result, mae_result = train_model(
     config,
@@ -142,22 +144,43 @@ def main():
   parser.add_argument("--data_name", type=str, default="ETTh1", help="Name of the dataset.")
   parser.add_argument("--root_path", type=str, default="ETT-small", help="Root path of the dataset.")
   parser.add_argument("--data_path", type=str, default="ETTh1.csv", help="Relative path to the data file.")
-  parser.add_argument("--embed", type=str, default="timeF", help="Time features encoding (options: timeF, fixed, learned)")
+  parser.add_argument(
+    "--embed", type=str, default="timeF", help="Time features encoding (options: timeF, fixed, learned)"
+  )
   parser.add_argument("--features", type=str, default="M", help="Forecasting task type (options: M, S, MS)")
   parser.add_argument("--target", type=str, default="OT", help="Target feature")
-  parser.add_argument("--freq", type=str, default="h", help="Frequency for time features encoding. (options: s (secondly), t (minutely), h (hourly), d (daily), b (business days), w (weekly), m (monthly)). More detailed frequencies like 15min or 3h supported.")
+  parser.add_argument(
+    "--freq",
+    type=str,
+    default="h",
+    help="Frequency for time features encoding. (options: s (secondly), t (minutely), h (hourly), d (daily), b (business days), w (weekly), m (monthly)). More detailed frequencies like 15min or 3h supported.",
+  )
   parser.add_argument("--num_channels", type=int, default=7, help="Number of data channels.")
   # parser.add_argument("--seasonal_patterns", type=str, default="Monthly", help="Subset for M4.")
 
   # Model Configuration
   parser.add_argument("--depth", type=int, default=2, help="Number of layers in the model.")
-  parser.add_argument("--first_norm_layer", type=str, default="layer", help="Type of normalization technique used before noise reduction.")
-  parser.add_argument("--second_norm_layer", type=str, default="adain", help="Type of normalization technique used after noise reduction.")
-  parser.add_argument("--patch_size", type=int, default=16, help="Size of patches (used if multi-patching is disabled).")
-  parser.add_argument("--blend_ratio", type=float, default=0.1, help="Indicates the ratio at which the style input will be combined.")
-  parser.add_argument("--style_blend_gate_affine", type=str2bool, default=True, help="Whether to apply extra shifting and scaling.")
-  parser.add_argument("--use_multi_patching", type=str2bool, default=True, help="Whether to use multi-patching technique.")
-  parser.add_argument("--use_rank_reduction", type=str2bool, default=True, help="Whether to use rank reduction technique.")
+  parser.add_argument(
+    "--first_norm_layer", type=str, default="layer", help="Type of normalization technique used before noise reduction."
+  )
+  parser.add_argument(
+    "--second_norm_layer", type=str, default="adain", help="Type of normalization technique used after noise reduction."
+  )
+  parser.add_argument(
+    "--patch_size", type=int, default=16, help="Size of patches (used if multi-patching is disabled)."
+  )
+  parser.add_argument(
+    "--blend_ratio", type=float, default=0.1, help="Indicates the ratio at which the style input will be combined."
+  )
+  parser.add_argument(
+    "--style_blend_gate_affine", type=str2bool, default=True, help="Whether to apply extra shifting and scaling."
+  )
+  parser.add_argument(
+    "--use_multi_patching", type=str2bool, default=True, help="Whether to use multi-patching technique."
+  )
+  parser.add_argument(
+    "--use_rank_reduction", type=str2bool, default=True, help="Whether to use rank reduction technique."
+  )
 
   # Training Configuration
   parser.add_argument("--num_trials", type=int, default=100, help="Number of trials.")
@@ -165,12 +188,14 @@ def main():
   parser.add_argument("--seq_len", type=int, default=96, help="Length of the input sequence.")
   parser.add_argument("--label_len", type=int, default=0, help="Length of the label sequence.")
   parser.add_argument("--pred_len", type=int, default=96, help="Length of the prediction sequence.")
-  parser.add_argument("--accumulate_grad_batches", type=int, default=1, help="Accumulates gradients over specified number of batches.")
+  parser.add_argument(
+    "--accumulate_grad_batches", type=int, default=1, help="Accumulates gradients over specified number of batches."
+  )
   parser.add_argument("--seed", type=int, default=56, help="Seed for random number generators.")
 
   args = parser.parse_args()
 
-  data_config = DataConfig(
+  data_config = CANetDataConfig(
     data_name=args.data_name,
     root_dir_path=args.root_path,
     data_path=args.data_path,
@@ -181,7 +206,7 @@ def main():
     num_channels=args.num_channels,
   )
 
-  train_config = TrainConfig(
+  train_config = CANetTrainConfig(
     num_epochs=args.num_epochs,
     data_config=data_config,
     patch_size=args.patch_size,
@@ -208,7 +233,9 @@ def main():
   study_name: str = f"{train_config.data_config.data_name}-SeqLen{train_config.seq_len}-PredLen{train_config.pred_len}-FirstNorm{train_config.first_norm_layer}-SecondNorm{train_config.second_norm_layer}-MP{train_config.use_multi_patching}-RankReduction{train_config.use_rank_reduction}"
   storage: str = f"sqlite:///{study_name}.db"
 
-  study: optuna.Study = optuna.create_study(study_name=study_name, storage=storage, direction="minimize", load_if_exists=True, sampler=sampler)
+  study: optuna.Study = optuna.create_study(
+    study_name=study_name, storage=storage, direction="minimize", load_if_exists=True, sampler=sampler
+  )
   objective_partial = partial(objective, config=train_config)
   study.optimize(
     objective_partial,

@@ -9,7 +9,7 @@ from canet.layers.dain import DAIN_Layer
 from canet.layers.icb import InteractiveConvolutionalBlock
 from canet.layers.nsan import AdaIN, MeanStdProjector, StyleBlendingGate
 from canet.layers.positional_encoding import positional_encoding
-from config.canet_config import TrainConfig
+from config.canet_config import CANetTrainConfig
 
 
 class Patchifier(L.LightningModule):
@@ -25,12 +25,12 @@ class Patchifier(L.LightningModule):
 
 
 class CANetLayer(L.LightningModule):
-  def __init__(self, patch_size: int, config: TrainConfig, mlp_ratio: float = 3.0, drop_path_ratio: float = 0.0):
+  def __init__(self, patch_size: int, config: CANetTrainConfig, mlp_ratio: float = 3.0, drop_path_ratio: float = 0.0):
     super().__init__()
     self.patch_size: int = patch_size
     self.mlp_ratio: float = mlp_ratio
     self.drop_path_ratio: float = drop_path_ratio
-    self.config: TrainConfig = config
+    self.config: CANetTrainConfig = config
 
     self.patchifier = Patchifier(self.config.seq_len, self.patch_size)
 

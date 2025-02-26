@@ -3,7 +3,7 @@ from typing import List
 
 
 @dataclass
-class DataConfig:
+class CANetDataConfig:
   data_name: str = field(default="")
   root_dir_path: str = field(default="")
   data_path: str = field(default="")
@@ -16,8 +16,8 @@ class DataConfig:
 
 
 @dataclass
-class TrainConfig:
-  data_config: DataConfig = field(default_factory=DataConfig)
+class CANetTrainConfig:
+  data_config: CANetDataConfig = field(default_factory=CANetDataConfig)
   num_epochs: int = field(default=10)
   batch_size: int = field(default=128)
   patch_size: int = field(default=16)

@@ -7,17 +7,17 @@ from torch import Tensor, nn, optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
 
-from canet.layers.canet_layers import CANetLayer
+from canet.layers.canet_layer import CANetLayer
 from canet.layers.sklinear import SKLinear
-from config.canet_config import TrainConfig
+from config.canet_config import CANetTrainConfig
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class CANet(L.LightningModule):
-  def __init__(self, config: TrainConfig):
+  def __init__(self, config: CANetTrainConfig):
     super().__init__()
-    self.config: TrainConfig = config
+    self.config: CANetTrainConfig = config
 
     drop_path_ratios: List[float] = [x.item() for x in torch.linspace(0, 0.5, self.config.depth)]
 
@@ -74,9 +74,9 @@ class CANet(L.LightningModule):
 
 
 class TrainedCANet(L.LightningModule):
-  def __init__(self, config: TrainConfig):
+  def __init__(self, config: CANetTrainConfig):
     super().__init__()
-    self.config: TrainConfig = config
+    self.config: CANetTrainConfig = config
     self.model = CANet(self.config)
 
     self.criterion = nn.MSELoss()
