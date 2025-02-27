@@ -86,8 +86,8 @@ class TrainedCANet(L.LightningModule):
 
     self.lr: float = self.config.train_lr
 
-    self.preds: List[Any] = []  # TODO: Replace Any to the suitable type
-    self.trues: List[Any] = []  # TODO: Replace Any to the suitable type
+    self.preds: List[Any] = []
+    self.trues: List[Any] = []
 
     self.save_hyperparameters()
 
