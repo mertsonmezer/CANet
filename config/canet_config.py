@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Literal
 
 
 @dataclass
@@ -20,7 +20,6 @@ class CANetTrainConfig:
   data_config: CANetDataConfig = field(default_factory=CANetDataConfig)
   num_epochs: int = field(default=10)
   batch_size: int = field(default=128)
-  # patch_size: int = field(default=16)
   patch_sizes: List[int] = field(default_factory=lambda: [8, 64])
   embed_dim: int = field(default=32)
   depth: int = field(default=2)
@@ -33,9 +32,8 @@ class CANetTrainConfig:
   weight_decay: float = field(default=1e-6)
   dropout_rate: float = field(default=0.5)
   accumulate_grad_batches: int = field(default=1)
-  first_norm_layer: str = field(default="layer")
-  second_norm_layer: str = field(default="adain")
+  first_norm_layer: Literal["nsan", "layer", "batch", "instance", "dain"] = field(default="layer")
+  second_norm_layer: Literal["nsan", "layer", "batch", "instance", "dain"] = field(default="nsan")
   blend_ratio: float = field(default=0.1)
   style_blend_gate_affine: bool = field(default=True)
-  # use_multi_patching: bool = field(default=True)
   use_rank_reduction: bool = field(default=True)

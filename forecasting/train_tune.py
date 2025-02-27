@@ -36,7 +36,7 @@ def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: st
 
   for trial in study.trials:
     if trial.number != best_trial_number:
-      trial_prefix: str = f"{config.data_config.data_name}-SeqLen{config.seq_len}-PredLen{config.pred_len}-FirstNorm{config.first_norm_layer}-SecondNorm{config.second_norm_layer}-MP{config.use_multi_patching}-RankReduction{config.use_rank_reduction}"
+      trial_prefix: str = f"{config.data_config.data_name}-SeqLen{config.seq_len}-PredLen{config.pred_len}-FirstNorm{config.first_norm_layer}-SecondNorm{config.second_norm_layer}-RankReduction{config.use_rank_reduction}"
       trial_dir: str = os.path.join(logs_dir, f"{trial_prefix}-Trial{trial.number}")
       if os.path.exists(trial_dir):
         print(f"Deleting {trial_dir}")
@@ -99,7 +99,7 @@ def objective(trial: optuna.trial.Trial, config: CANetTrainConfig) -> float:
   _, val_dataloader = data_provider(config, flag="val")
   _, test_dataloader = data_provider(config, flag="test")
 
-  run_description: str = f"{config.data_config.data_name}-SeqLen{config.seq_len}-PredLen{config.pred_len}-FirstNorm{config.first_norm_layer}-SecondNorm{config.second_norm_layer}-MP{config.use_multi_patching}-RankReduction{config.use_rank_reduction}-Trial{trial._trial_id - 1}"
+  run_description: str = f"{config.data_config.data_name}-SeqLen{config.seq_len}-PredLen{config.pred_len}-FirstNorm{config.first_norm_layer}-SecondNorm{config.second_norm_layer}-RankReduction{config.use_rank_reduction}-Trial{trial._trial_id - 1}"
   print(f"========== {run_description} ===========")
 
   checkpoint_dir_path: str = f"logs/{run_description}"

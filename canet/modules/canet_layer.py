@@ -38,14 +38,14 @@ class CANetLayer(L.LightningModule):
     self.input_layer2 = nn.Linear(self.patch_size, self.config.embed_dim)
     self.drop2 = nn.Dropout(self.config.dropout_rate)
 
-    if self.config.first_norm_layer == "adain" or self.config.second_norm_layer == "adain":
+    if self.config.first_norm_layer == "nsan" or self.config.second_norm_layer == "nsan":
       self.mean_std_proj = MeanStdProjector(self.config.embed_dim, self.config.dropout_rate)
       self.style_blending_gate = StyleBlendingGate(
         self.config.embed_dim, self.config.blend_ratio, self.config.style_blend_gate_affine
       )
 
     # First Normalization Layer
-    if self.config.first_norm_layer == "adain":
+    if self.config.first_norm_layer == "nsan":
       self.norm_layer1 = AdaIN()
     elif self.config.first_norm_layer == "layer":
       self.norm_layer1 = nn.LayerNorm(self.config.embed_dim)
@@ -57,7 +57,7 @@ class CANetLayer(L.LightningModule):
       self.norm_layer1 = DAIN(mode="full", input_dim=self.patchifier.num_patches)
 
     # Second Normalization Layer
-    if self.config.second_norm_layer == "adain":
+    if self.config.second_norm_layer == "nsan":
       self.norm_layer2 = AdaIN()
     elif self.config.second_norm_layer == "layer":
       self.norm_layer2 = nn.LayerNorm(self.config.embed_dim)
@@ -100,7 +100,7 @@ class CANetLayer(L.LightningModule):
     style_mean: Tensor = x_patched_style.mean(dim=1, keepdim=True)
     style_std: Tensor = x_patched_style.std(dim=1, keepdim=True) + 1e-5
 
-    if self.config.first_norm_layer == "adain":
+    if self.config.first_norm_layer == "nsan":
       mean, std = self.mean_std_proj(mean, std)
       mean, std = self.style_blending_gate(mean, std, style_mean, style_std)
       x_patched = self.norm_layer1(x_patched, mean, std)
@@ -109,7 +109,7 @@ class CANetLayer(L.LightningModule):
 
     x_patched = self.asb(x_patched)
 
-    if self.config.second_norm_layer == "adain":
+    if self.config.second_norm_layer == "nsan":
       mean, std = self.mean_std_proj(mean, std)
       mean, std = self.style_blending_gate(mean, std, style_mean, style_std)
       x_patched = self.norm_layer2(x_patched, mean, std)
@@ -133,7 +133,7 @@ def demo():
     embed_dim=32,
     dropout_rate=0.5,
     first_norm_layer="layer",
-    second_norm_layer="adain",
+    second_norm_layer="nsan",
     blend_ratio=0.1,
     style_blend_gate_affine=True,
   )
