@@ -27,7 +27,7 @@ def round_up_sqrt(value: int) -> int:
 
 
 class StackedKroneckerProductLayer(L.LightningModule):
-  def __init__(self, input_dim: int, output_dim: int, scale: float = 0.5):
+  def __init__(self, input_dim: int, output_dim: int, scale: float = 0.5, verbose: bool = False):
     super().__init__()
 
     if input_dim <= 0 or output_dim <= 0:
@@ -48,7 +48,8 @@ class StackedKroneckerProductLayer(L.LightningModule):
     # Compute reduced rank
     self.reduced_rank: int = int(scale * (input_dim * output_dim) / (2.0 * self.kron_dim) + 0.5)
 
-    self._print_layer_info()
+    if verbose:
+      self._print_layer_info()
 
     # Initialize low-rank factor matrices with Kaiming initialization
     self.factor_A = nn.Parameter(torch.empty(self.kron_dim, self.reduced_rank))

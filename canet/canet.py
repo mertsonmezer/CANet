@@ -8,7 +8,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
 
 from canet.layers.canet_layer import CANetLayer
-from canet.layers.sklinear import SKLinear
+from canet.layers.skp_layer import StackedKroneckerProductLayer
 from config.canet_config import CANetTrainConfig
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -16,6 +16,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class CANet(L.LightningModule):
   def __init__(self, config: CANetTrainConfig):
+    torch.manual_seed(42)
     super().__init__()
     self.config: CANetTrainConfig = config
 
@@ -35,12 +36,12 @@ class CANet(L.LightningModule):
     total_num_pathes: int = sum(layer.patchifier.num_patches for layer in self.net_layers)
 
     # Optional rank-reducing projection using Stacked Kronecker Product Layer.
-    self.fc1: SKLinear | nn.Linear = (
-      SKLinear(self.config.embed_dim * total_num_pathes, self.config.output_features, scale=0.5)
+    self.fc1: StackedKroneckerProductLayer | nn.Linear = (
+      StackedKroneckerProductLayer(self.config.embed_dim * total_num_pathes, self.config.output_features, scale=0.5)
       if self.config.use_rank_reduction
       else nn.Linear(self.config.embed_dim * total_num_pathes, self.config.output_features)
     )
-    self.drop = nn.Dropout(self.config.dropout_rate)
+    # self.drop = nn.Dropout(self.config.dropout_rate)
     self.relu = nn.ReLU()
     self.fc2 = nn.Linear(self.config.output_features, self.config.pred_len)
 
@@ -61,7 +62,7 @@ class CANet(L.LightningModule):
 
     x_concat: Tensor = torch.cat(xs_patched, dim=1)
     x_concat = self.fc1(x_concat)
-    x_concat = self.drop(x_concat)
+    # x_concat = self.drop(x_concat)
     x_concat = self.relu(x_concat)
 
     out: Tensor = self.fc2(x_concat)
@@ -158,3 +159,35 @@ class TrainedCANet(L.LightningModule):
     mse: Tensor = self.mse(preds.contiguous(), trues.contiguous())
     mae: Tensor = self.mae(preds, trues)
     print(f"{mae, mse}")
+
+
+def demo():
+  # Create a dummy configuration
+  config = CANetTrainConfig(
+    batch_size=128,
+    depth=2,
+    patch_sizes=[8, 64],
+    embed_dim=32,
+    output_features=1024,
+    seq_len=336,
+    pred_len=96,
+    use_multi_patching=True,
+    use_rank_reduction=True,
+  )
+
+  # Generate a random input
+  input: Tensor = torch.randn(config.batch_size, config.seq_len, config.data_config.num_channels)
+
+  # Initialize model
+  model = TrainedCANet(config)
+  model.eval()
+
+  # Run the model
+  with torch.no_grad():
+    output: Tensor = model(input)
+
+  print(f"Input shape: {input.shape}")
+  print(f"Output shape: {output.shape}")
+
+if __name__ == "__main__":
+  demo()

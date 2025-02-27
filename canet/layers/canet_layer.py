@@ -128,6 +128,7 @@ def demo():
 
   # Define dummy config
   config = CANetTrainConfig(
+    batch_size=128,
     seq_len=336,
     embed_dim=32,
     dropout_rate=0.5,
@@ -142,11 +143,7 @@ def demo():
   canet_layer = CANetLayer(patch_size, config)
 
   # Generate dummy inputs
-  batch_size: int = 128
-  num_channels: int = 7
-  seq_len: int = config.seq_len
-
-  input: Tensor = torch.randn(batch_size, seq_len, num_channels)  # Input sequence
+  input: Tensor = torch.randn(config.batch_size, config.seq_len, config.data_config.num_channels)  # Input sequence
   mean: Tensor = input.mean(dim=1, keepdim=True)  # Mean tensor
   std: Tensor = input.std(dim=1, keepdim=True)  # Std tensor
 

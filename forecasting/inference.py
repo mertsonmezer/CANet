@@ -41,7 +41,9 @@ def get_best_model_path(data: str, seq_len: int, pred_len: int, normalization: s
   best_trial = study.best_trial
   best_trial_id = best_trial._trial_id
 
-  model_folder_path_prefix: str = f"logs/{data}_{str(seq_len)}_{str(pred_len)}_trial{str(best_trial_id - 1)}_norm{str(normalization)}_mp{str(mrp)}"
+  model_folder_path_prefix: str = (
+    f"logs/{data}_{str(seq_len)}_{str(pred_len)}_trial{str(best_trial_id - 1)}_norm{str(normalization)}_mp{str(mrp)}"
+  )
 
   matching_folders = glob.glob(f"{model_folder_path_prefix}*")
 
