@@ -166,16 +166,10 @@ def main():
     "--second_norm_layer", type=str, default="adain", help="Type of normalization technique used after noise reduction."
   )
   parser.add_argument(
-    "--patch_size", type=int, default=16, help="Size of patches (used if multi-patching is disabled)."
-  )
-  parser.add_argument(
     "--blend_ratio", type=float, default=0.1, help="Indicates the ratio at which the style input will be combined."
   )
   parser.add_argument(
     "--style_blend_gate_affine", type="store_true", default=True, help="Whether to apply extra shifting and scaling."
-  )
-  parser.add_argument(
-    "--use_multi_patching", type="store_true", default=True, help="Whether to use multi-patching technique."
   )
   parser.add_argument(
     "--use_rank_reduction", type="store_true", default=True, help="Whether to use rank reduction technique."
@@ -208,7 +202,6 @@ def main():
   train_config = CANetTrainConfig(
     num_epochs=args.num_epochs,
     data_config=data_config,
-    patch_size=args.patch_size,
     seq_len=args.seq_len,
     label_len=args.label_len,
     pred_len=args.pred_len,
@@ -216,7 +209,6 @@ def main():
     second_norm_layer=args.second_norm_layer,
     blend_ratio=args.blend_ratio,
     style_blend_gate_affine=args.style_blend_gate_affine,
-    use_multi_patching=args.use_multi_patching,
     use_rank_reduction=args.use_rank_reduction,
     accumulate_grad_batches=args.accumulate_grad_batches,
     seed=args.seed,
@@ -229,7 +221,7 @@ def main():
 
   sampler = TPESampler(seed=train_config.seed)
 
-  study_name: str = f"{train_config.data_config.data_name}-SeqLen{train_config.seq_len}-PredLen{train_config.pred_len}-FirstNorm{train_config.first_norm_layer}-SecondNorm{train_config.second_norm_layer}-MP{train_config.use_multi_patching}-RankReduction{train_config.use_rank_reduction}"
+  study_name: str = f"{train_config.data_config.data_name}-SeqLen{train_config.seq_len}-PredLen{train_config.pred_len}-FirstNorm{train_config.first_norm_layer}-SecondNorm{train_config.second_norm_layer}-RankReduction{train_config.use_rank_reduction}"
   storage: str = f"sqlite:///{study_name}.db"
 
   study: optuna.Study = optuna.create_study(

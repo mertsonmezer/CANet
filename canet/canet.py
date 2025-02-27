@@ -25,7 +25,7 @@ class CANet(L.LightningModule):
     self.net_layers = nn.ModuleList(
       [
         CANetLayer(
-          patch_size=self.config.patch_sizes[i] if self.config.use_multi_patching else self.config.patch_size,
+          patch_size=self.config.patch_sizes[i],
           config=self.config,
           drop_path_ratio=drop_path_ratios[i],
         )
@@ -171,7 +171,6 @@ def demo():
     output_features=1024,
     seq_len=336,
     pred_len=96,
-    use_multi_patching=True,
     use_rank_reduction=True,
   )
 

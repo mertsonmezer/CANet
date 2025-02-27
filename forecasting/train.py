@@ -92,9 +92,6 @@ def main():
     "--second_norm_layer", type=str, default="adain", help="Type of normalization technique used after noise reduction."
   )
   parser.add_argument(
-    "--patch_size", type=int, default=16, help="Size of patches (used if multi-patching is disabled)."
-  )
-  parser.add_argument(
     "--patch_sizes",
     type=int,
     nargs="+",
@@ -106,9 +103,6 @@ def main():
   )
   parser.add_argument(
     "--style_blend_gate_affine", type="store_true", default=True, help="Whether to apply extra shifting and scaling."
-  )
-  parser.add_argument(
-    "--use_multi_patching", type="store_true", default=True, help="Whether to use multi-patching technique."
   )
   parser.add_argument(
     "--use_rank_reduction", type="store_true", default=True, help="Whether to use rank reduction technique."
@@ -142,7 +136,6 @@ def main():
     num_epochs=args.num_epochs,
     batch_size=args.batch_size,
     data_config=data_config,
-    patch_size=args.patch_size,
     patch_sizes=args.patch_sizes,
     embed_dim=args.emb_dim,
     depth=args.depth,
@@ -154,7 +147,6 @@ def main():
     second_norm_layer=args.second_norm_layer,
     blend_ratio=args.blend_ratio,
     style_blend_gate_affine=args.style_blend_gate_affine,
-    use_multi_patching=args.use_multi_patching,
     use_rank_reduction=args.use_rank_reduction,
     accumulate_grad_batches=args.accumulate_grad_batches,
     seed=args.seed,
@@ -165,7 +157,7 @@ def main():
     f"{data_config.data_name}-"
     f"Embed{train_config.embed_dim}-"
     f"Depth{train_config.depth}-"
-    f"{'MP' + '-'.join(map(str, train_config.patch_sizes)) if train_config.use_multi_patching else 'PS' + str(train_config.patch_size)}-"
+    f"{'MP' + '-'.join(map(str, train_config.patch_sizes))}-"
     f"PredLen{train_config.pred_len}-"
     f"Batch{train_config.batch_size}-"
     f"FirstNorm{train_config.first_norm_layer}-"
