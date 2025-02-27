@@ -8,7 +8,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
 
 from canet.layers.canet_layer import CANetLayer
-from canet.layers.sklinear import SKLinear
+from depreciated.sklinear import SKLinear
 from config.canet_config import CANetTrainConfig
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
