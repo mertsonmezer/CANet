@@ -7,7 +7,7 @@ from torch import Tensor, nn, optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
 
-from canet.layers.canet_layer import CANetLayer
+from canet.modules.canet_layer import CANetLayer
 from depreciated.sklinear import SKLinear
 from config.canet_config import CANetTrainConfig
 

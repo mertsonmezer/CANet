@@ -4,10 +4,7 @@ matplotlib.use("TkAgg")
 
 import torch
 import time
-import numpy as np
 import matplotlib.pyplot as plt
-import torch.nn.functional as F
-import lightning as L
 from lightning.pytorch.utilities.model_summary import ModelSummary
 from canet.canet import TrainedCANet
 from data.data_factory import data_provider

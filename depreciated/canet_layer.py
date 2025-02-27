@@ -5,11 +5,11 @@ from einops import rearrange
 from timm.models.layers import DropPath
 from torch import Tensor
 
-from canet.layers.asb import AdaptiveSpectralBlock
+from canet.modules.asb import AdaptiveSpectralBlock
 from depreciated.dain import DAIN_Layer
-from canet.layers.icb import InteractiveConvolutionalBlock
-from canet.layers.nsan import AdaIN, MeanStdProjector, StyleBlendingGate
-from canet.layers.patchifier import Patchifier
+from canet.modules.icb import InteractiveConvolutionalBlock
+from canet.modules.nsan import AdaIN, MeanStdProjector, StyleBlendingGate
+from canet.modules.patchifier import Patchifier
 from depreciated.positional_encoding import positional_encoding
 from config.canet_config import CANetTrainConfig
 

@@ -5,13 +5,13 @@ from einops import rearrange
 from timm.models.layers import DropPath
 from torch import Tensor
 
-from canet.layers.asb import AdaptiveSpectralBlock
-from canet.layers.icb import InteractiveConvolutionalBlock
-from canet.layers.nsan import AdaIN, MeanStdProjector, StyleBlendingGate
-from canet.layers.patchifier import Patchifier
-from canet.layers.positional_encoding import create_positional_encoding
+from canet.modules.asb import AdaptiveSpectralBlock
+from canet.modules.dain import DAIN
+from canet.modules.icb import InteractiveConvolutionalBlock
+from canet.modules.nsan import AdaIN, MeanStdProjector, StyleBlendingGate
+from canet.modules.patchifier import Patchifier
+from canet.modules.positional_encoding import create_positional_encoding
 from config.canet_config import CANetTrainConfig
-from canet.layers.dain import DAIN
 
 
 class CANetLayer(L.LightningModule):

@@ -18,7 +18,6 @@ from torch.utils.data import DataLoader
 from config.canet_config import CANetDataConfig, CANetTrainConfig
 from data.data_factory import data_provider
 from canet.canet import TrainedCANet
-from utils.utils import str2bool
 
 # Set device to GPU if available, else CPU
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -173,13 +172,13 @@ def main():
     "--blend_ratio", type=float, default=0.1, help="Indicates the ratio at which the style input will be combined."
   )
   parser.add_argument(
-    "--style_blend_gate_affine", type=str2bool, default=True, help="Whether to apply extra shifting and scaling."
+    "--style_blend_gate_affine", type="store_true", default=True, help="Whether to apply extra shifting and scaling."
   )
   parser.add_argument(
-    "--use_multi_patching", type=str2bool, default=True, help="Whether to use multi-patching technique."
+    "--use_multi_patching", type="store_true", default=True, help="Whether to use multi-patching technique."
   )
   parser.add_argument(
-    "--use_rank_reduction", type=str2bool, default=True, help="Whether to use rank reduction technique."
+    "--use_rank_reduction", type="store_true", default=True, help="Whether to use rank reduction technique."
   )
 
   # Training Configuration
