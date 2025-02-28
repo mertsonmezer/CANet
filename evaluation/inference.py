@@ -118,7 +118,7 @@ def visualize_results(inputs: Tensor, targets: Tensor, outputs: Tensor, example_
   plt.show()
 
 
-def main() -> None:
+def main():
   parser = argparse.ArgumentParser(description="Inference of CANet model.")
   parser.add_argument("--model_path", type=str, required=True, help="Path to the CANet model checkpoint (.ckpt file).")
   parser.add_argument("--example_id", type=int, default=0, help="Index of the example to visualize.")
