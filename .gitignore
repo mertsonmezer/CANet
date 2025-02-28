@@ -173,3 +173,4 @@ cython_debug/
 # Directories
 datasets/
 logs/
+depreciated/

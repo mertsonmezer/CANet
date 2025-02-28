@@ -1,23 +1,22 @@
-for seq_len in 96
-do
-	for pred_len in 96
-	do
-    for norm in "nsan" "batch" "dain" "instance" "layer"
-    do
-      python3 -m forecasting.train_tune \
-      --data_name "ETTh1" \
-      --root_path "datasets/ETT-small/" \
-      --data_path "ETTh1.csv" \
-      --seq_len $seq_len \
-      --pred_len $pred_len \
-      --num_trials 100 \
-      --num_epochs 20 \
-      --seed 56 \
-      --num_channels 7 \
-      --first_norm_layer layer \
-      --second_norm_layer $norm \
-      --style_blend_gate_affine \
-      --use_rank_reduction
-    done
-	done
-done
+python3 -m forecasting.train_tune \
+  --data_name "ETTh1" \
+  --root_path "datasets/ETT-small/" \
+  --data_path "ETTh1.csv" \
+  --num_channels 7 \
+  --embed_dims 32 64 \
+  --depth 2 \
+  --low_dropout 0.3 \
+  --high_dropout 0.5 \
+  --patch_sizes "[[8, 64], [32, 64]]" \
+  --first_norm_layer layer \
+  --second_norm_layer nsan \
+  --seq_len 96 \
+  --pred_len 96 \
+  --num_trials 100 \
+  --num_epochs 20 \
+  --low_lr 1e-4 \
+  --high_lr 1e-2 \
+  --style_blend_gate_affine \
+  --use_rank_reduction \
+  --seed 56 \
+
