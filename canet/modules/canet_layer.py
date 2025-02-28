@@ -1,5 +1,4 @@
 import lightning as L
-import torch
 import torch.nn as nn
 from einops import rearrange
 from timm.models.layers import DropPath
@@ -16,7 +15,6 @@ from config.canet_config import CANetTrainConfig
 
 class CANetLayer(L.LightningModule):
   def __init__(self, patch_size: int, config: CANetTrainConfig, mlp_ratio: float = 3.0, drop_path_ratio: float = 0.0):
-    torch.manual_seed(42)  # TODO: Remove here
     super().__init__()
     self.patch_size: int = patch_size
     self.mlp_ratio: float = mlp_ratio

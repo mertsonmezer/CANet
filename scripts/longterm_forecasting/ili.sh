@@ -2,7 +2,7 @@ for pred_len in 24 36 48 60
 do
   python3 -m forecasting.train_tune \
     --data_name "custom" \
-    --root_path "ILI/" \
+    --root_path "datasets/ILI/" \
     --data_path "illness.csv" \
     --num_channels 7 \
     --embed_dims 32 64 128 \
@@ -11,7 +11,7 @@ do
     --high_dropout 0.5 \
     --first_norm_layer layer \
     --second_norm_layer nsan \
-    --patch_sizes "[[8, 32], [8, 48], [8, 64], [16, 48], [16, 64]]" \
+    --patch_sizes "[[4, 12], [4, 16], [4, 24], [8, 16], [8, 24]]" \
     --num_trials 100 \
     --num_epochs 20 \
     --batch_sizes 8 16 32 \
