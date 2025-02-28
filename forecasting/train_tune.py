@@ -202,7 +202,7 @@ def main():
 
   # Model Configuration
   parser.add_argument("--embed_dims", type=int, nargs="+", default=[32, 64, 128], help="List of embedding dimensions.")
-  parser.add_argument("--depth", type=int, default=3, help="Number of layers in the model.")
+  parser.add_argument("--depth", type=int, default=2, help="Number of layers in the model.")
   parser.add_argument("--low_dropout", type=float, default=0.3, help="Lower bound of dropout rate.")
   parser.add_argument("--high_dropout", type=float, default=0.5, help="Upper bound of dropout rate.")
   parser.add_argument(
