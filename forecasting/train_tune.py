@@ -1,7 +1,8 @@
 import argparse
-import shutil
-import os
+import ast
 import json
+import os
+import shutil
 from dataclasses import asdict
 from functools import partial
 from typing import Dict, List
@@ -11,49 +12,72 @@ import optuna
 import pandas as pd
 import torch
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, TQDMProgressBar
-from optuna.trial._frozen import FrozenTrial
 from optuna.samplers import TPESampler
+from optuna.trial._frozen import FrozenTrial
 from torch.utils.data import DataLoader
 
-from config.canet_config import DataConfig, TrainConfig
-from data.data_factory import data_provider
 from canet.canet import TrainedCANet
-from utils.utils import str2bool
+from config.canet_config import CANetDataConfig, CANetTrainConfig
+from data.data_factory import data_provider
 
 # Set device to GPU if available, else CPU
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Define ranges for hyperparameter tuning
-LOW_LR, HIGH_LR = 1e-4, 1e-2
-LOW_DROPOUT, HIGH_DROPOUT = 0.3, 0.5
-BATCH_SIZES: List[int] = [1024]
-PATCH_SIZES: List[List[int]] = [[8, 64]]
-EMBED_DIMS: List[int] = [64]
 
+def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: str):
+  """
+  Cleans up non-best trial directories from the log directory.
 
-def clean_trial_logs(study: optuna.Study, config: TrainConfig, logs_dir: str):
+  This function removes the directories of trials that did not yield the best results.
+
+  Args:
+    study: The Optuna study containing all trials.
+    config: Configuration object containing training settings.
+    logs_dir: The directory where trial logs are stored.
+  """
+
   best_trial_number: int = study.best_trial.number
   print(f"Best trial is {best_trial_number}, cleaning up non-best trial directories.")
 
   for trial in study.trials:
     if trial.number != best_trial_number:
-      trial_prefix: str = f"{config.data_config.data_name}-SeqLen{config.seq_len}-PredLen{config.pred_len}-FirstNorm{config.first_norm_layer}-SecondNorm{config.second_norm_layer}-MP{config.use_multi_patching}-RankReduction{config.use_rank_reduction}"
+      trial_prefix: str = (
+        f"{config.data_config.data_name}-SeqLen{config.seq_len}-"
+        f"PredLen{config.pred_len}-FirstNorm{config.first_norm_layer}-"
+        f"SecondNorm{config.second_norm_layer}-RankReduction{config.use_rank_reduction}"
+      )
       trial_dir: str = os.path.join(logs_dir, f"{trial_prefix}-Trial{trial.number}")
+
+      # Delete the trial directory if it exists
       if os.path.exists(trial_dir):
         print(f"Deleting {trial_dir}")
         shutil.rmtree(trial_dir, ignore_errors=True)
 
 
 def train_model(
-  config: TrainConfig,
+  config: CANetTrainConfig,
   train_dataloader: DataLoader[torch.dtype],
   val_dataloader: DataLoader[torch.dtype],
   test_dataloader: DataLoader[torch.dtype],
-  checkpoint_dir_path: str,
+  checkpoint_dir: str,
   checkpoint_callback: ModelCheckpoint,
 ) -> tuple[TrainedCANet, Dict[str, float], Dict[str, float]]:
+  """
+  Trains the CANet model and evaluates on validation and test sets.
+
+  Args:
+    config: Training configuration.
+    train_dataloader: DataLoader for the training dataset.
+    val_dataloader: DataLoader for the validation dataset.
+    test_dataloader: DataLoader for the test dataset.
+    checkpoint_dir: Directory to save model checkpoints.
+    checkpoint_callback: Callback for saving the best model checkpoint.
+
+  Returns:
+    A tuple containing the trained model, MSE results, and MAE results.
+  """
   trainer = L.Trainer(
-    default_root_dir=checkpoint_dir_path,
+    default_root_dir=checkpoint_dir,
     accelerator="auto",
     num_sanity_val_steps=0,
     devices=1,
@@ -87,24 +111,44 @@ def train_model(
   return model, mse_result, mae_result
 
 
-def objective(trial: optuna.trial.Trial, config: TrainConfig) -> float:
+def objective(trial: optuna.trial.Trial, args: argparse.Namespace, config: CANetTrainConfig) -> float:
+  """
+  Objective function for Optuna hyperparameter tuning.
+
+  This function is used by Optuna to suggest hyperparameters and train the model. It evaluates the model
+  using the Mean Squared Error (MSE) on the validation set, which is returned as the objective value.
+
+  Args:
+    trial: An Optuna trial instance used for suggesting hyperparameter values.
+    args: ...
+    config: A configuration object containing model and training parameters.
+
+  Returns:
+    float: The MSE result on the test set, which is used as the objective value.
+  """
   # Suggest values for hyperparameters based on predefined ranges
-  config.batch_size = trial.suggest_categorical("batch_size", BATCH_SIZES)
-  config.train_lr = trial.suggest_loguniform("train_lr", LOW_LR, HIGH_LR)
-  config.dropout_rate = trial.suggest_float("dropout_rate", LOW_DROPOUT, HIGH_DROPOUT)
-  config.patch_sizes = trial.suggest_categorical("patch_sizes", PATCH_SIZES)
-  config.embed_dim = trial.suggest_categorical("embed_dim", EMBED_DIMS)
+  config.batch_size = trial.suggest_categorical("batch_size", args.batch_sizes)
+  config.train_lr = trial.suggest_loguniform("train_lr", args.low_lr, args.high_lr)
+  config.dropout_rate = trial.suggest_float("dropout_rate", args.low_dropout, args.high_dropout)
+  config.patch_sizes = trial.suggest_categorical("patch_sizes", args.patch_sizes)
+  config.embed_dim = trial.suggest_categorical("embed_dim", args.embed_dims)
 
   # Load datasets
   _, train_dataloader = data_provider(config, flag="train")
   _, val_dataloader = data_provider(config, flag="val")
   _, test_dataloader = data_provider(config, flag="test")
 
-  run_description: str = f"{config.data_config.data_name}-SeqLen{config.seq_len}-PredLen{config.pred_len}-FirstNorm{config.first_norm_layer}-SecondNorm{config.second_norm_layer}-MP{config.use_multi_patching}-RankReduction{config.use_rank_reduction}-Trial{trial._trial_id - 1}"
+  run_description: str = (
+    f"{config.data_config.data_name}-SeqLen{config.seq_len}-PredLen{config.pred_len}-"
+    f"FirstNorm{config.first_norm_layer}-SecondNorm{config.second_norm_layer}-"
+    f"RankReduction{config.use_rank_reduction}-Trial{trial._trial_id - 1}"
+  )
   print(f"========== {run_description} ===========")
 
   checkpoint_dir_path: str = f"logs/{run_description}"
-  checkpoint_callback = ModelCheckpoint(dirpath=checkpoint_dir_path, save_top_k=1, filename="train-{epoch}", monitor="val_mse", mode="min")
+  checkpoint_callback = ModelCheckpoint(
+    dirpath=checkpoint_dir_path, save_top_k=1, filename="train-{epoch}", monitor="val_mse", mode="min"
+  )
 
   model, mse_result, mae_result = train_model(
     config,
@@ -142,35 +186,66 @@ def main():
   parser.add_argument("--data_name", type=str, default="ETTh1", help="Name of the dataset.")
   parser.add_argument("--root_path", type=str, default="ETT-small", help="Root path of the dataset.")
   parser.add_argument("--data_path", type=str, default="ETTh1.csv", help="Relative path to the data file.")
-  parser.add_argument("--embed", type=str, default="timeF", help="Time features encoding (options: timeF, fixed, learned)")
-  parser.add_argument("--features", type=str, default="M", help="Forecasting task type (options: M, S, MS)")
-  parser.add_argument("--target", type=str, default="OT", help="Target feature")
-  parser.add_argument("--freq", type=str, default="h", help="Frequency for time features encoding. (options: s (secondly), t (minutely), h (hourly), d (daily), b (business days), w (weekly), m (monthly)). More detailed frequencies like 15min or 3h supported.")
+  parser.add_argument(
+    "--embed", type=str, default="timeF", choices=["timeF", "fixed", "learned"], help="Time feature encoding method."
+  )
+  parser.add_argument("--features", type=str, default="M", choices=["M", "S", "MS"], help="Forecasting task type.")
+  parser.add_argument("--target", type=str, default="OT", help="Target feature.")
+  parser.add_argument(
+    "--freq",
+    type=str,
+    default="h",
+    help="Frequency for time features encoding (e.g., s (secondly), t (minutely), h (hourly), d (daily), b (business days), w (weekly), m (monthly)).",
+  )
   parser.add_argument("--num_channels", type=int, default=7, help="Number of data channels.")
   # parser.add_argument("--seasonal_patterns", type=str, default="Monthly", help="Subset for M4.")
 
   # Model Configuration
-  parser.add_argument("--depth", type=int, default=2, help="Number of layers in the model.")
-  parser.add_argument("--first_norm_layer", type=str, default="layer", help="Type of normalization technique used before noise reduction.")
-  parser.add_argument("--second_norm_layer", type=str, default="adain", help="Type of normalization technique used after noise reduction.")
-  parser.add_argument("--patch_size", type=int, default=16, help="Size of patches (used if multi-patching is disabled).")
-  parser.add_argument("--blend_ratio", type=float, default=0.1, help="Indicates the ratio at which the style input will be combined.")
-  parser.add_argument("--style_blend_gate_affine", type=str2bool, default=True, help="Whether to apply extra shifting and scaling.")
-  parser.add_argument("--use_multi_patching", type=str2bool, default=True, help="Whether to use multi-patching technique.")
-  parser.add_argument("--use_rank_reduction", type=str2bool, default=True, help="Whether to use rank reduction technique.")
+  parser.add_argument("--embed_dims", type=int, nargs="+", default=[32, 64, 128], help="List of embedding dimensions.")
+  parser.add_argument("--depth", type=int, default=3, help="Number of layers in the model.")
+  parser.add_argument("--low_dropout", type=float, default=0.3, help="Lower bound of dropout rate.")
+  parser.add_argument("--high_dropout", type=float, default=0.5, help="Upper bound of dropout rate.")
+  parser.add_argument(
+    "--first_norm_layer",
+    type=str,
+    default="layer",
+    choices=["nsan", "layer", "batch", "instance", "dain"],
+    help="Pre-noise reduction normalization type.",
+  )
+  parser.add_argument(
+    "--second_norm_layer",
+    type=str,
+    default="nsan",
+    choices=["nsan", "layer", "batch", "instance", "dain"],
+    help="Post-noise reduction normalization type.",
+  )
+  parser.add_argument(
+    "--patch_sizes",
+    type=str,
+    default="[[8, 64]]",
+    help="List of patch sizes in the form of a list of lists (e.g. [[8, 64], [16, 128]]).",
+  )
+  parser.add_argument("--blend_ratio", type=float, default=0.1, help="Ratio for style blending.")
+  parser.add_argument("--style_blend_gate_affine", action="store_true", help="Enable extra shifting and scaling.")
+  parser.add_argument("--use_rank_reduction", action="store_true", help="Enable rank reduction technique.")
 
   # Training Configuration
   parser.add_argument("--num_trials", type=int, default=100, help="Number of trials.")
-  parser.add_argument("--num_epochs", type=int, default=20, help="Number of epochs.")
-  parser.add_argument("--seq_len", type=int, default=96, help="Length of the input sequence.")
-  parser.add_argument("--label_len", type=int, default=0, help="Length of the label sequence.")
-  parser.add_argument("--pred_len", type=int, default=96, help="Length of the prediction sequence.")
-  parser.add_argument("--accumulate_grad_batches", type=int, default=1, help="Accumulates gradients over specified number of batches.")
-  parser.add_argument("--seed", type=int, default=56, help="Seed for random number generators.")
+  parser.add_argument("--num_epochs", type=int, default=20, help="Number of training epochs.")
+  parser.add_argument("--batch_sizes", type=int, nargs="+", default=[1024], help="List of batch sizes.")
+  parser.add_argument("--seq_len", type=int, default=96, help="Input sequence length.")
+  parser.add_argument("--label_len", type=int, default=0, help="Label sequence length.")
+  parser.add_argument("--pred_len", type=int, default=96, help="Prediction sequence length.")
+  parser.add_argument("--low_lr", type=float, default=1e-4, help="Lower bound of learning rate.")
+  parser.add_argument("--high_lr", type=float, default=1e-2, help="Upper bound of learning rate.")
+  parser.add_argument("--accumulate_grad_batches", type=int, default=1, help="Gradient accumulation steps.")
+  parser.add_argument("--seed", type=int, default=56, help="Random seed.")
 
-  args = parser.parse_args()
+  args: argparse.Namespace = parser.parse_args()
 
-  data_config = DataConfig(
+  args.patch_sizes = ast.literal_eval(args.patch_sizes)
+
+  data_config = CANetDataConfig(
     data_name=args.data_name,
     root_dir_path=args.root_path,
     data_path=args.data_path,
@@ -181,10 +256,9 @@ def main():
     num_channels=args.num_channels,
   )
 
-  train_config = TrainConfig(
+  train_config = CANetTrainConfig(
     num_epochs=args.num_epochs,
     data_config=data_config,
-    patch_size=args.patch_size,
     seq_len=args.seq_len,
     label_len=args.label_len,
     pred_len=args.pred_len,
@@ -192,7 +266,6 @@ def main():
     second_norm_layer=args.second_norm_layer,
     blend_ratio=args.blend_ratio,
     style_blend_gate_affine=args.style_blend_gate_affine,
-    use_multi_patching=args.use_multi_patching,
     use_rank_reduction=args.use_rank_reduction,
     accumulate_grad_batches=args.accumulate_grad_batches,
     seed=args.seed,
@@ -205,11 +278,13 @@ def main():
 
   sampler = TPESampler(seed=train_config.seed)
 
-  study_name: str = f"{train_config.data_config.data_name}-SeqLen{train_config.seq_len}-PredLen{train_config.pred_len}-FirstNorm{train_config.first_norm_layer}-SecondNorm{train_config.second_norm_layer}-MP{train_config.use_multi_patching}-RankReduction{train_config.use_rank_reduction}"
+  study_name: str = f"{train_config.data_config.data_name}-SeqLen{train_config.seq_len}-PredLen{train_config.pred_len}-FirstNorm{train_config.first_norm_layer}-SecondNorm{train_config.second_norm_layer}-RankReduction{train_config.use_rank_reduction}"
   storage: str = f"sqlite:///{study_name}.db"
 
-  study: optuna.Study = optuna.create_study(study_name=study_name, storage=storage, direction="minimize", load_if_exists=True, sampler=sampler)
-  objective_partial = partial(objective, config=train_config)
+  study: optuna.Study = optuna.create_study(
+    study_name=study_name, storage=storage, direction="minimize", load_if_exists=True, sampler=sampler
+  )
+  objective_partial = partial(objective, args=args, config=train_config)
   study.optimize(
     objective_partial,
     n_trials=args.num_trials,
