@@ -174,3 +174,4 @@ cython_debug/
 datasets/
 logs/
 depreciated/
+results/
