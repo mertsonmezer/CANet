@@ -1,23 +1,17 @@
-declare -a patch_sizes=("8, 16")
-
-for patch_sizes in "${patch_sizes[@]}"
-do
-  python3 -m forecasting.train \
-    --data_name "custom" \
-    --root_path "ILI" \
-    --data_path "illness.csv" \
-    --seq_len 36 \
-    --pred_len 24 \
-    --num_epochs 50 \
-    --batch_size 32 \
-    --seed 42 \
-    --emb_dim 128 \
-    --depth 2 \
-    --patch_sizes "$patch_sizes" \
-    --num_channels 7 \
-    --first_norm_layer layer \
-    --second_norm_layer adain \
-    --style_blend_gate_affine True \
-    --use_multi_patching True \
-    --use_rank_reduction True
-done
+python3 -m forecasting.train \
+  --data_name "ETTh1" \
+  --root_path "datasets/ETT-small" \
+  --data_path "ETTh1.csv" \
+  --embed_dim 32 \
+  --depth 2 \
+  --first_norm_layer layer \
+  --second_norm_layer nsan \
+  --patch_sizes 16 64 \
+  --seq_len 96 \
+  --pred_len 96 \
+  --num_epochs 10 \
+  --batch_size 1024 \
+  --num_channels 7 \
+  --style_blend_gate_affine \
+  --use_rank_reduction \
+  --seed 52
