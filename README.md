@@ -1,26 +1,87 @@
-<h2> <p align="center"> CANet: ChronoAdaptive Network for Long-term Time Series Forecasting [Paper] [<a href="#citation">Cite</a>]
-</p> </h2>
-
-_**by: Sonmezer, M. & Ertekin, S.**_
-
-### Abstract
----
+<h1 align="center">CANet: ChronoAdaptive Network</h1>
+<h3 align="center">Long-term Time Series Forecasting</h3>
 <p align="center">
-  <img src="figs/model_architecture.jpg" alt="Alt text" width="75%"/>
+  <a href="https://github.com/mertsonmezer/CANet/stargazers"><img src="https://img.shields.io/github/stars/mertsonmezer/CANet" alt="Stars"></a>
+  <a href="https://github.com/mertsonmezer/CANet/network/members"><img src="https://img.shields.io/github/forks/mertsonmezer/CANet" alt="Forks"></a>
+  <a href="https://github.com/mertsonmezer/CANet/issues"><img src="https://img.shields.io/github/issues/mertsonmezer/CANet" alt="Issues"></a>
+  <a href="https://github.com/mertsonmezer/CANet/blob/main/LICENSE"><img src="https://img.shields.io/github/license/mertsonmezer/CANet" alt="License"></a>
 </p>
+<p align="center">
+  <b>Official implementation</b> | <a href="#">Paper</a> | <a href="#citation">Cite</a>
+</p>
+<p align="center">
+  <img src="figs/model_architecture.jpg" alt="CANet Architecture" width="80%"/>
+</p>
+<p align="center"><i>Figure: CANet's architecture tackles the challenge of non-stationarity in time series data</i></p>
+
+## 🌟 Why CANet?
+Real-world time series data is messy. Distribution shifts, temporal changes in statistical properties, and non-stationarity plague traditional forecasting models. While existing approaches struggle with these challenges, CANet thrives. CANet achieves breakthrough performance by:
+
+* 🔄 Preserving non-stationarity through our innovative Style Blending Gate
+* 🔍 Dynamically adapting to statistical changes with AdaIN
+* 📊 Handling multi-scale patterns via multi-resolution patching
+* 🔮 Reducing noise through Fourier analysis-based adaptive thresholding
+* ⚡ Optimizing efficiency with Stacked Kronecker Product Layer
+
+## 📈 Impressive Results
+Extensive experiments on real-world datasets demonstrate CANet's superiority:
+
+* 42% reduction in Mean Squared Error (MSE)
+* 22% reduction in Mean Absolute Error (MAE)
+
+Compared to state-of-the-art methods, CANet consistently delivers more accurate forecasts across diverse domains.
+
+## 🛠️ Setup
+
+**1. Install Python**
+Ensure you have Python 3.10 installed on your system.
+
+**2. Install Dependencies**
+You can install the required dependencies using pip or Conda.
+
+**Option 1: Using pip**
+Run the following command:
+```bash
+pip install -r requirements.txt
+```
+
+**Option 2: Using Conda**
+First, create a new Conda environment and then install the dependencies:
+```bash
+conda env create --name canet --file=environments.yml
+pip install -r requirements.txt
+```
+
+## 📊 Datasets
+The datasets used in our experiments can be obtained from the following repository:
+
+[![thuml/Time-Series-Library](https://img.shields.io/badge/-Time_Series_Library_(TSLib)-181717?logo=github&logoColor=white&style=for-the-badge)](https://github.com/thuml/Time-Series-Library)
+
+## 🧪 Experiments
+We provide ready-to-use bash scripts for running experiments. For example, to run the long-term forecasting experiment on the ETTh1 dataset:
+
+1. Ensure you have the ETTh1 dataset downloaded and ready.
+2. Make the experiment script executable and run it with the following commands:
+
+```bash
+chmod +x scripts/longterm_forecasting/etth1.sh  # Ensure the script is executable
+./scripts/longterm_forecasting/etth1.sh         # Run the experiment
+```
+
+As shown in the figure below, CANet consistently achieves superior performance on long-term forecasting tasks across various real-world datasets, demonstrating its robustness and effectiveness in handling non-stationary time series data.
 
 <p align="center">
-  Figure: CANet Architecture
+  <img src="figs/longterm_forecasting_results.jpg" alt="Long-term Forecasting Results" width="95%"/>
 </p>
+<p align="center"><i>Figure: CANet outperforms state-of-the-art models across multiple datasets and forecasting horizons</i></p>
 
-Long-term time series forecasting plays a pivotal role in various real-world applications. Despite recent advancements and the success of different architectures, forecasting is often challenging due to non-stationary nature of the real-world data, which frequently exhibit distribution shifts and temporal changes in statistical properties like mean and variance over time. Previous studies suggest that this inherent variability complicates forecasting, limiting the performance of many models by leading to loss of non-stationarity and resulting in over-stationarization (Liu et al., 2022). To address this challenge, we introduce a novel architecture, **C**horono**A**daptive **Net**work (CANet), inspired by style-transfer techniques. The core of CANet is the Non-stationary Adaptive Normalization module, seamlessly integrating the Style Blending Gate and Adaptive Instance Normalization (AdaIN) (Huang and Belongie, 2017). The Style Blending Gate preserves and reintegrates non-stationary characteristics, such as mean and standard deviation, by blending internal and external statistics, preventing over-stationarization while maintaining essential temporal dependencies. Coupled with AdaIN, which dynamically adapts the model to statistical changes, this approach enhances predictive accuracy under non-stationary conditions. CANet also employs multi-resolution patching to handle short-term fluctuations and long-term trends, along with Fourier analysis-based adaptive thresholding to reduce noise. A Stacked Kronecker Product Layer further optimizes the model's efficiency while maintaining high performance. Extensive experiments on real-world datasets validate CANet's superiority over state-of-the-art methods, achieving a 42% reduction in MSE and a 22% reduction in MAE.
+## 📬 Contact
+If you have any questions or concerns, feel free to reach out:
 
-### Datasets
----
-Datasets used during the experiments can be obtained from the following repository: [![thuml/Time-Series-Library](https://img.shields.io/badge/-Time_Series_Library_(TSLib)-181717?logo=github&logoColor=white&style=for-the-badge)](https://github.com/thuml/Time-Series-Library)
+📧 **Email:** [mert.sonmezer@metu.edu.tr](mailto:mert.sonmezer@metu.edu.tr)
+🐛 **Issues:** [Submit an issue](https://github.com/canet/issues)
 
-### Citation
----
+## 📖 Citation
 If you found this work useful, please consider citing it:
 ```bibtex
 @article{canet2025,
@@ -31,12 +92,7 @@ If you found this work useful, please consider citing it:
 }
 ```
 
-### Contact
----
-If you have any questions or concerns, feel free to contact the following email: mert.sonmezer@metu.edu.tr or submit an issue.
-
-### Acknowledgements
----
+## 🙏 Acknowledgements
 We appreciate the following papers and their repositories for providing valuable codebases:
 
 | Papers     | Links                                     |
