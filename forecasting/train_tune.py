@@ -27,10 +27,21 @@ LOW_LR, HIGH_LR = 1e-4, 1e-2
 LOW_DROPOUT, HIGH_DROPOUT = 0.3, 0.5
 BATCH_SIZES: List[int] = [1024]
 PATCH_SIZES: List[List[int]] = [[8, 64]]
-EMBED_DIMS: List[int] = [64]
+EMBED_DIMS: List[int] = [32, 64, 128]
 
 
 def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: str):
+  """
+  Cleans up non-best trial directories from the log directory.
+
+  This function removes the directories of trials that did not yield the best results.
+
+  Args:
+    study: The Optuna study containing all trials.
+    config: Configuration object containing training settings.
+    logs_dir: The directory where trial logs are stored.
+  """
+
   best_trial_number: int = study.best_trial.number
   print(f"Best trial is {best_trial_number}, cleaning up non-best trial directories.")
 
@@ -38,6 +49,8 @@ def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: st
     if trial.number != best_trial_number:
       trial_prefix: str = f"{config.data_config.data_name}-SeqLen{config.seq_len}-PredLen{config.pred_len}-FirstNorm{config.first_norm_layer}-SecondNorm{config.second_norm_layer}-RankReduction{config.use_rank_reduction}"
       trial_dir: str = os.path.join(logs_dir, f"{trial_prefix}-Trial{trial.number}")
+
+      # Delete the trial directory if it exists
       if os.path.exists(trial_dir):
         print(f"Deleting {trial_dir}")
         shutil.rmtree(trial_dir, ignore_errors=True)
@@ -48,11 +61,25 @@ def train_model(
   train_dataloader: DataLoader[torch.dtype],
   val_dataloader: DataLoader[torch.dtype],
   test_dataloader: DataLoader[torch.dtype],
-  checkpoint_dir_path: str,
+  checkpoint_dir: str,
   checkpoint_callback: ModelCheckpoint,
 ) -> tuple[TrainedCANet, Dict[str, float], Dict[str, float]]:
+  """
+  Trains the CANet model and evaluates on validation and test sets.
+
+  Args:
+    config: Training configuration.
+    train_dataloader: DataLoader for the training dataset.
+    val_dataloader: DataLoader for the validation dataset.
+    test_dataloader: DataLoader for the test dataset.
+    checkpoint_dir: Directory to save model checkpoints.
+    checkpoint_callback: Callback for saving the best model checkpoint.
+
+  Returns:
+    A tuple containing the trained model, MSE results, and MAE results.
+  """
   trainer = L.Trainer(
-    default_root_dir=checkpoint_dir_path,
+    default_root_dir=checkpoint_dir,
     accelerator="auto",
     num_sanity_val_steps=0,
     devices=1,
@@ -87,6 +114,19 @@ def train_model(
 
 
 def objective(trial: optuna.trial.Trial, config: CANetTrainConfig) -> float:
+  """
+  Objective function for Optuna hyperparameter tuning.
+
+  This function is used by Optuna to suggest hyperparameters and train the model. It evaluates the model
+  using the Mean Squared Error (MSE) on the validation set, which is returned as the objective value.
+
+  Args:
+    trial: An Optuna trial instance used for suggesting hyperparameter values.
+    config: A configuration object containing model and training parameters.
+
+  Returns:
+    float: The MSE result on the test set, which is used as the objective value.
+  """
   # Suggest values for hyperparameters based on predefined ranges
   config.batch_size = trial.suggest_categorical("batch_size", BATCH_SIZES)
   config.train_lr = trial.suggest_loguniform("train_lr", LOW_LR, HIGH_LR)
@@ -99,7 +139,11 @@ def objective(trial: optuna.trial.Trial, config: CANetTrainConfig) -> float:
   _, val_dataloader = data_provider(config, flag="val")
   _, test_dataloader = data_provider(config, flag="test")
 
-  run_description: str = f"{config.data_config.data_name}-SeqLen{config.seq_len}-PredLen{config.pred_len}-FirstNorm{config.first_norm_layer}-SecondNorm{config.second_norm_layer}-RankReduction{config.use_rank_reduction}-Trial{trial._trial_id - 1}"
+  run_description: str = (
+    f"{config.data_config.data_name}-SeqLen{config.seq_len}-PredLen{config.pred_len}-"
+    f"FirstNorm{config.first_norm_layer}-SecondNorm{config.second_norm_layer}-"
+    f"RankReduction{config.use_rank_reduction}-Trial{trial._trial_id - 1}"
+  )
   print(f"========== {run_description} ===========")
 
   checkpoint_dir_path: str = f"logs/{run_description}"
@@ -144,47 +188,47 @@ def main():
   parser.add_argument("--root_path", type=str, default="ETT-small", help="Root path of the dataset.")
   parser.add_argument("--data_path", type=str, default="ETTh1.csv", help="Relative path to the data file.")
   parser.add_argument(
-    "--embed", type=str, default="timeF", help="Time features encoding (options: timeF, fixed, learned)"
+    "--embed", type=str, default="timeF", choices=["timeF", "fixed", "learned"], help="Time feature encoding method."
   )
-  parser.add_argument("--features", type=str, default="M", help="Forecasting task type (options: M, S, MS)")
-  parser.add_argument("--target", type=str, default="OT", help="Target feature")
+  parser.add_argument("--features", type=str, default="M", choices=["M", "S", "MS"], help="Forecasting task type.")
+  parser.add_argument("--target", type=str, default="OT", help="Target feature.")
   parser.add_argument(
     "--freq",
     type=str,
     default="h",
-    help="Frequency for time features encoding. (options: s (secondly), t (minutely), h (hourly), d (daily), b (business days), w (weekly), m (monthly)). More detailed frequencies like 15min or 3h supported.",
+    help="Frequency for time features encoding (e.g., s (secondly), t (minutely), h (hourly), d (daily), b (business days), w (weekly), m (monthly)).",
   )
   parser.add_argument("--num_channels", type=int, default=7, help="Number of data channels.")
   # parser.add_argument("--seasonal_patterns", type=str, default="Monthly", help="Subset for M4.")
 
   # Model Configuration
-  parser.add_argument("--depth", type=int, default=2, help="Number of layers in the model.")
+  parser.add_argument("--depth", type=int, default=3, help="Number of layers in the model.")
   parser.add_argument(
-    "--first_norm_layer", type=str, default="layer", help="Type of normalization technique used before noise reduction."
+    "--first_norm_layer",
+    type=str,
+    default="layer",
+    choices=["nsan", "layer", "batch", "instance", "dain"],
+    help="Pre-noise reduction normalization type.",
   )
   parser.add_argument(
-    "--second_norm_layer", type=str, default="adain", help="Type of normalization technique used after noise reduction."
+    "--second_norm_layer",
+    type=str,
+    default="nsan",
+    choices=["nsan", "layer", "batch", "instance", "dain"],
+    help="Post-noise reduction normalization type.",
   )
-  parser.add_argument(
-    "--blend_ratio", type=float, default=0.1, help="Indicates the ratio at which the style input will be combined."
-  )
-  parser.add_argument(
-    "--style_blend_gate_affine", type="store_true", default=True, help="Whether to apply extra shifting and scaling."
-  )
-  parser.add_argument(
-    "--use_rank_reduction", type="store_true", default=True, help="Whether to use rank reduction technique."
-  )
+  parser.add_argument("--blend_ratio", type=float, default=0.1, help="Ratio for style blending.")
+  parser.add_argument("--style_blend_gate_affine", action="store_true", help="Enable extra shifting and scaling.")
+  parser.add_argument("--use_rank_reduction", action="store_true", help="Enable rank reduction technique.")
 
   # Training Configuration
   parser.add_argument("--num_trials", type=int, default=100, help="Number of trials.")
-  parser.add_argument("--num_epochs", type=int, default=20, help="Number of epochs.")
-  parser.add_argument("--seq_len", type=int, default=96, help="Length of the input sequence.")
-  parser.add_argument("--label_len", type=int, default=0, help="Length of the label sequence.")
-  parser.add_argument("--pred_len", type=int, default=96, help="Length of the prediction sequence.")
-  parser.add_argument(
-    "--accumulate_grad_batches", type=int, default=1, help="Accumulates gradients over specified number of batches."
-  )
-  parser.add_argument("--seed", type=int, default=56, help="Seed for random number generators.")
+  parser.add_argument("--num_epochs", type=int, default=20, help="Number of training epochs.")
+  parser.add_argument("--seq_len", type=int, default=96, help="Input sequence length.")
+  parser.add_argument("--label_len", type=int, default=0, help="Label sequence length.")
+  parser.add_argument("--pred_len", type=int, default=96, help="Prediction sequence length.")
+  parser.add_argument("--accumulate_grad_batches", type=int, default=1, help="Gradient accumulation steps.")
+  parser.add_argument("--seed", type=int, default=56, help="Random seed.")
 
   args = parser.parse_args()
 

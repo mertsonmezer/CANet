@@ -22,11 +22,25 @@ def train_model(
   train_dataloader: DataLoader[torch.dtype],
   val_dataloader: DataLoader[torch.dtype],
   test_dataloader: DataLoader[torch.dtype],
-  checkpoint_dir_path: str,
+  checkpoint_dir: str,
   checkpoint_callback: ModelCheckpoint,
 ) -> tuple[Any, Dict[str, float], Dict[str, float]]:
+  """
+  Trains the CANet model and evaluates on validation and test sets.
+
+  Args:
+    config: Training configuration.
+    train_dataloader: DataLoader for the training dataset.
+    val_dataloader: DataLoader for the validation dataset.
+    test_dataloader: DataLoader for the test dataset.
+    checkpoint_dir: Directory to save model checkpoints.
+    checkpoint_callback: Callback for saving the best model checkpoint.
+
+  Returns:
+    A tuple containing the trained model, MSE results, and MAE results.
+  """
   trainer = L.Trainer(
-    default_root_dir=checkpoint_dir_path,
+    default_root_dir=checkpoint_dir,
     accelerator="auto",
     num_sanity_val_steps=0,
     devices=1,
@@ -54,8 +68,14 @@ def train_model(
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)
   test_result = trainer.test(model, dataloaders=test_dataloader, verbose=False)
 
-  mse_result: Dict[str, float] = {"test": test_result[0]["test_mse"], "val": val_result[0]["test_mse"]}
-  mae_result: Dict[str, float] = {"test": test_result[0]["test_mae"], "val": val_result[0]["test_mae"]}
+  mse_result: Dict[str, float] = {
+    "test": test_result[0]["test_mse"],
+    "val": val_result[0]["test_mse"],
+  }
+  mae_result: Dict[str, float] = {
+    "test": test_result[0]["test_mae"],
+    "val": val_result[0]["test_mae"],
+  }
 
   return model, mse_result, mae_result
 
@@ -68,58 +88,52 @@ def main():
   parser.add_argument("--root_path", type=str, default="ETT-small", help="Root path of the dataset.")
   parser.add_argument("--data_path", type=str, default="ETTh1.csv", help="Relative path to the data file.")
   parser.add_argument(
-    "--embed", type=str, default="timeF", help="Time features encoding (options: timeF, fixed, learned)"
+    "--embed", type=str, default="timeF", choices=["timeF", "fixed", "learned"], help="Time feature encoding method."
   )
-  parser.add_argument("--features", type=str, default="M", help="Forecasting task type (options: M, S, MS)")
-  parser.add_argument("--target", type=str, default="OT", help="Target feature")
+  parser.add_argument("--features", type=str, default="M", choices=["M", "S", "MS"], help="Forecasting task type.")
+  parser.add_argument("--target", type=str, default="OT", help="Target feature.")
   parser.add_argument(
     "--freq",
     type=str,
     default="h",
-    help="Frequency for time features encoding. (options: s (secondly), t (minutely), h (hourly), d (daily), b (business days), w (weekly), m (monthly)). More detailed frequencies like 15min or 3h supported.",
+    help="Frequency for time features encoding (e.g., s (secondly), t (minutely), h (hourly), d (daily), b (business days), w (weekly), m (monthly)).",
   )
   parser.add_argument("--num_channels", type=int, default=7, help="Number of data channels.")
   # parser.add_argument("--seasonal_patterns", type=str, default="Monthly", help="Subset for M4.")
 
   # Model Configuration
-  parser.add_argument("--emb_dim", type=int, default=64, help="Dimensionality of the model.")
+  parser.add_argument("--embed_dim", type=int, default=64, help="Embedding dimensionality of the model.")
   parser.add_argument("--depth", type=int, default=3, help="Number of layers in the model.")
   parser.add_argument("--dropout", type=float, default=0.5, help="Dropout rate.")
   parser.add_argument(
-    "--first_norm_layer", type=str, default="layer", help="Type of normalization technique used before noise reduction."
+    "--first_norm_layer",
+    type=str,
+    default="layer",
+    choices=["nsan", "layer", "batch", "instance", "dain"],
+    help="Pre-noise reduction normalization type.",
   )
   parser.add_argument(
-    "--second_norm_layer", type=str, default="adain", help="Type of normalization technique used after noise reduction."
+    "--second_norm_layer",
+    type=str,
+    default="nsan",
+    choices=["nsan", "layer", "batch", "instance", "dain"],
+    help="Post-noise reduction normalization type.",
   )
-  parser.add_argument(
-    "--patch_sizes",
-    type=int,
-    nargs="+",
-    default=[8, 64],
-    help="Sizes of multi-resolution patches (space-separated integers).",
-  )
-  parser.add_argument(
-    "--blend_ratio", type=float, default=0.1, help="Indicates the ratio at which the style input will be combined."
-  )
-  parser.add_argument(
-    "--style_blend_gate_affine", type="store_true", default=True, help="Whether to apply extra shifting and scaling."
-  )
-  parser.add_argument(
-    "--use_rank_reduction", type="store_true", default=True, help="Whether to use rank reduction technique."
-  )
+  parser.add_argument("--patch_sizes", type=int, nargs="+", default=[8, 64], help="Sizes of multi-resolution patches.")
+  parser.add_argument("--blend_ratio", type=float, default=0.1, help="Ratio for style blending.")
+  parser.add_argument("--style_blend_gate_affine", action="store_true", help="Enable extra shifting and scaling.")
+  parser.add_argument("--use_rank_reduction", action="store_true", help="Enable rank reduction technique.")
 
   # Training Configuration
-  parser.add_argument("--num_epochs", type=int, default=20, help="Number of epochs.")
+  parser.add_argument("--num_epochs", type=int, default=20, help="Number of training epochs.")
   parser.add_argument("--batch_size", type=int, default=256, help="Training batch size.")
-  parser.add_argument("--seq_len", type=int, default=96, help="Length of the input sequence.")
-  parser.add_argument("--label_len", type=int, default=0, help="Length of the label sequence.")
-  parser.add_argument("--pred_len", type=int, default=96, help="Length of the prediction sequence.")
-  parser.add_argument(
-    "--accumulate_grad_batches", type=int, default=1, help="Accumulates gradients over specified number of batches."
-  )
-  parser.add_argument("--seed", type=int, default=56, help="Seed for random number generators.")
+  parser.add_argument("--seq_len", type=int, default=96, help="Input sequence length.")
+  parser.add_argument("--label_len", type=int, default=0, help="Label sequence length.")
+  parser.add_argument("--pred_len", type=int, default=96, help="Prediction sequence length.")
+  parser.add_argument("--accumulate_grad_batches", type=int, default=1, help="Gradient accumulation steps.")
+  parser.add_argument("--seed", type=int, default=56, help="Random seed.")
 
-  args = parser.parse_args()
+  args: argparse.Namespace = parser.parse_args()
 
   data_config = CANetDataConfig(
     data_name=args.data_name,
@@ -137,7 +151,7 @@ def main():
     batch_size=args.batch_size,
     data_config=data_config,
     patch_sizes=args.patch_sizes,
-    embed_dim=args.emb_dim,
+    embed_dim=args.embed_dim,
     depth=args.depth,
     seq_len=args.seq_len,
     label_len=args.label_len,

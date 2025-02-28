@@ -2,11 +2,11 @@ for seq_len in 96
 do
 	for pred_len in 96
 	do
-    for norm in "adain" "batch" "dain" "instance" "layer"
+    for norm in "nsan" "batch" "dain" "instance" "layer"
     do
       python3 -m forecasting.train_tune \
       --data_name "ETTh1" \
-      --root_path "ETT-small/" \
+      --root_path "datasets/ETT-small/" \
       --data_path "ETTh1.csv" \
       --seq_len $seq_len \
       --pred_len $pred_len \
@@ -16,9 +16,8 @@ do
       --num_channels 7 \
       --first_norm_layer layer \
       --second_norm_layer $norm \
-      --style_blend_gate_affine True \
-      --use_multi_patching True \
-      --use_rank_reduction True
+      --style_blend_gate_affine \
+      --use_rank_reduction
     done
 	done
 done
