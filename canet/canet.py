@@ -16,7 +16,6 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class CANet(L.LightningModule):
   def __init__(self, config: CANetTrainConfig):
-    torch.manual_seed(42)  # TODO: Remove here
     super().__init__()
     self.config: CANetTrainConfig = config
 
@@ -41,7 +40,7 @@ class CANet(L.LightningModule):
       if self.config.use_rank_reduction
       else nn.Linear(self.config.embed_dim * total_num_pathes, self.config.output_features)
     )
-    # self.drop = nn.Dropout(self.config.dropout_rate)
+    self.drop = nn.Dropout(self.config.dropout_rate)
     self.relu = nn.ReLU()
     self.fc2 = nn.Linear(self.config.output_features, self.config.pred_len)
 
@@ -62,7 +61,7 @@ class CANet(L.LightningModule):
 
     x_concat: Tensor = torch.cat(xs_patched, dim=1)
     x_concat = self.fc1(x_concat)
-    # x_concat = self.drop(x_concat)
+    x_concat = self.drop(x_concat)
     x_concat = self.relu(x_concat)
 
     out: Tensor = self.fc2(x_concat)
