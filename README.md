@@ -48,7 +48,7 @@ pip install -r requirements.txt
 **Option 2: Using Conda**
 First, create a new Conda environment and then install the dependencies:
 ```bash
-conda env create --name canet --file=environments.yml
+conda env create --name canet --file=environment.yml
 pip install -r requirements.txt
 ```
 
