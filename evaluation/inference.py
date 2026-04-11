@@ -12,7 +12,7 @@ from data.data_factory import data_provider
 
 
 def perform_inference(
-  model: TrainedCANet, dataloader: DataLoader[float]
+  model: TrainedCANet, dataloader: DataLoader
 ) -> tuple[Tensor, Tensor, Tensor, float, float, float]:
   """
   Performs inference on the test dataset and evaluates performance.

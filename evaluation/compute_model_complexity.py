@@ -24,7 +24,7 @@ def calculate_model_size(model: TrainedCANet) -> int:
 
 
 def measure_inference_time(
-  model: TrainedCANet, dataloader: DataLoader[float], num_trials: int = 25
+  model: TrainedCANet, dataloader: DataLoader, num_trials: int = 25
 ) -> float:
   """
   Measures the average inference time of the model.

@@ -23,9 +23,9 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def train_model(
   config: CANetTrainConfig,
-  train_dataloader: DataLoader[torch.dtype],
-  val_dataloader: DataLoader[torch.dtype],
-  test_dataloader: DataLoader[torch.dtype],
+  train_dataloader: DataLoader,
+  val_dataloader: DataLoader,
+  test_dataloader: DataLoader,
   checkpoint_dir: str,
   checkpoint_callback: ModelCheckpoint,
 ) -> tuple[Any, Dict[str, float], Dict[str, float]]:

@@ -60,9 +60,9 @@ def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: st
 
 def train_model(
   config: CANetTrainConfig,
-  train_dataloader: DataLoader[torch.dtype],
-  val_dataloader: DataLoader[torch.dtype],
-  test_dataloader: DataLoader[torch.dtype],
+  train_dataloader: DataLoader,
+  val_dataloader: DataLoader,
+  test_dataloader: DataLoader,
   checkpoint_dir: str,
   checkpoint_callback: ModelCheckpoint,
 ) -> tuple[TrainedCANet, Dict[str, float], Dict[str, float]]:
