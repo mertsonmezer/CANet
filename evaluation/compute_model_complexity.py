@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 
 from canet.canet import TrainedCANet
 from data.data_factory import data_provider
+from utils.utils import DEVICE
 
 
 def calculate_model_size(model: TrainedCANet) -> int:
@@ -39,20 +40,18 @@ def measure_inference_time(
   Returns:
     float: Average inference time in milliseconds.
   """
-  # Select device
-  device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-  model.to(device)
+  model.to(DEVICE)
 
   # Prepare input tensor
   batch_x, _, _, _ = next(iter(dataloader))
-  input_tensor: Tensor = batch_x.float().to(device)[0, :, :].unsqueeze(0)
+  input_tensor: Tensor = batch_x.float().to(DEVICE)[0, :, :].unsqueeze(0)
 
   # Warm-up to avoid initialization overhead affecting timing
   for _ in range(10):
     _ = model(input_tensor)
 
   # Measure inference time
-  if device.type == "cuda":
+  if DEVICE.type == "cuda":
     # GPU timing
     start_event = torch.cuda.Event(enable_timing=True)
     end_event = torch.cuda.Event(enable_timing=True)

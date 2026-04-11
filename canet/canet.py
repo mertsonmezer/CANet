@@ -12,8 +12,7 @@ from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
 from canet.modules.canet_layer import CANetLayer
 from canet.modules.skp_layer import StackedKroneckerProductLayer
 from config.canet_config import CANetTrainConfig
-
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from utils.utils import DEVICE
 
 
 class CANet(L.LightningModule):

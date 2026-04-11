@@ -18,9 +18,7 @@ from torch.utils.data import DataLoader
 from canet.canet import TrainedCANet
 from config.canet_config import CANetDataConfig, CANetTrainConfig
 from data.data_factory import data_provider
-
-# Set device to GPU if available, else CPU
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from utils.utils import DEVICE
 
 
 def train_model(

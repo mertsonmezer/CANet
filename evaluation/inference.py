@@ -11,6 +11,7 @@ from torchmetrics import MeanAbsoluteError, MeanSquaredError
 
 from canet.canet import TrainedCANet
 from data.data_factory import data_provider
+from utils.utils import DEVICE
 
 
 def perform_inference(
@@ -29,20 +30,18 @@ def perform_inference(
   """
   model.eval()
 
-  # Select device
-  device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-  model.to(device)
+  model.to(DEVICE)
 
   # Get a batch from the dataloader
   example = next(iter(dataloader))
   inputs, targets, _, _ = example
 
   # Move inputs and targets to the selected device and ensure they are float and contiguous
-  inputs: Tensor = inputs.to(device).float().contiguous()
-  targets: Tensor = targets.to(device).float().contiguous()
+  inputs: Tensor = inputs.to(DEVICE).float().contiguous()
+  targets: Tensor = targets.to(DEVICE).float().contiguous()
 
   # Measure inference time
-  if device.type == "cuda":
+  if DEVICE.type == "cuda":
     # GPU timing
     start_event = torch.cuda.Event(enable_timing=True)
     end_event = torch.cuda.Event(enable_timing=True)
@@ -68,8 +67,8 @@ def perform_inference(
   outputs: Tensor = outputs.contiguous()
 
   # Initialize evaluation metrics
-  mse_metric: MeanSquaredError = MeanSquaredError().to(device)
-  mae_metric: MeanAbsoluteError = MeanAbsoluteError().to(device)
+  mse_metric: MeanSquaredError = MeanSquaredError().to(DEVICE)
+  mae_metric: MeanAbsoluteError = MeanAbsoluteError().to(DEVICE)
 
   # Compute MSE and MAE for the entire batch
   mse: float = mse_metric(outputs, targets).item()

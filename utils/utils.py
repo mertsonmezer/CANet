@@ -2,6 +2,11 @@
 
 import math
 
+import torch
+
+DEVICE: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+"""The active compute device (GPU if available, otherwise CPU)."""
+
 
 def round_up_sqrt(value: int) -> int:
   """
