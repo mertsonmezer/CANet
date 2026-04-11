@@ -1,5 +1,6 @@
 """Positional encoding utilities for patch sequences."""
 
+import logging
 import math
 from typing import Literal
 
@@ -8,6 +9,8 @@ import torch.nn as nn
 from torch import Tensor
 
 _SINUSOIDAL_BASE: float = 10000.0
+
+logger = logging.getLogger(__name__)
 
 
 def sin_cos_positional_encoding(
@@ -209,7 +212,7 @@ def demo() -> None:
     encoding_type="exp2d", learnable=True, sequence_length=384, embedding_dim=64
   )
 
-  print(f"Positional encoding shape: {positional_encoding.shape}")
+  logger.info("Positional encoding shape: %s", positional_encoding.shape)
 
 
 if __name__ == "__main__":

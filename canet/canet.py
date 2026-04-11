@@ -1,5 +1,6 @@
 """CANet model and Lightning training wrapper."""
 
+import logging
 from typing import Any
 
 import lightning as L
@@ -16,6 +17,8 @@ from utils.utils import DEVICE
 
 _INSTANCE_NORM_EPS: float = 1e-5
 _GRAD_CLIP_NORM: float = 4.0
+
+logger = logging.getLogger(__name__)
 
 
 class CANet(L.LightningModule):
@@ -218,7 +221,7 @@ class TrainedCANet(L.LightningModule):
 
     mse: Tensor = self.mse(preds.contiguous(), trues.contiguous())
     mae: Tensor = self.mae(preds, trues)
-    print(f"MAE: {mae:.4f}, MSE: {mse:.4f}")
+    logger.info("MAE: %.4f, MSE: %.4f", mae, mse)
 
 
 def demo() -> None:
@@ -245,8 +248,8 @@ def demo() -> None:
   with torch.no_grad():
     output: Tensor = model(input)
 
-  print(f"Input shape: {input.shape}")
-  print(f"Output shape: {output.shape}")
+  logger.info("Input shape: %s", input.shape)
+  logger.info("Output shape: %s", output.shape)
 
 
 if __name__ == "__main__":

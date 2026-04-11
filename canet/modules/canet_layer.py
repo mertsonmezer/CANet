@@ -1,5 +1,7 @@
 """Single CANet layer combining patching, normalization, and convolution."""
 
+import logging
+
 import lightning as L
 import torch.nn as nn
 from einops import rearrange
@@ -13,6 +15,8 @@ from canet.modules.nsan import AdaIN, MeanStdProjector, StyleBlendingGate
 from canet.modules.patchifier import Patchifier
 from canet.modules.positional_encoding import create_positional_encoding
 from config.canet_config import CANetTrainConfig
+
+logger = logging.getLogger(__name__)
 
 
 class CANetLayer(L.LightningModule):
@@ -182,8 +186,8 @@ def demo() -> None:
 
   output: Tensor = canet_layer(input, mean, std)
 
-  print(f"Input shape: {input.shape}")
-  print(f"Output shape: {output.shape}")
+  logger.info("Input shape: %s", input.shape)
+  logger.info("Output shape: %s", output.shape)
 
 
 if __name__ == "__main__":

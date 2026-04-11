@@ -1,5 +1,6 @@
 """Stacked Kronecker Product linear layer for efficient rank reduction."""
 
+import logging
 import math
 
 import lightning as L
@@ -8,6 +9,8 @@ import torch.nn as nn
 from torch import Tensor
 
 from utils.utils import round_up_sqrt
+
+logger = logging.getLogger(__name__)
 
 
 class StackedKroneckerProductLayer(L.LightningModule):
@@ -85,14 +88,19 @@ class StackedKroneckerProductLayer(L.LightningModule):
     reduction_percentage: float = (
       (2 * self.reduced_rank * self.kron_dim) * 100.0 / (self.input_dim * self.output_dim)
     )
-    print(
-      f"Using StackedKroneckerProductLayer: input_dim={self.input_dim}, "
-      f"output_dim={self.output_dim}, "
-      f"reduced_rank={self.reduced_rank}, rounded_input_dim={self.rounded_input_dim}, "
-      f"rounded_output_dim={self.rounded_output_dim}, "
-      f"extended_input_dim={self.extended_input_dim}, "
-      f"extended_output_dim={self.extended_output_dim}, kron_dim={self.kron_dim}, "
-      f"reduction={reduction_percentage:.2f}%"
+    logger.debug(
+      "Using StackedKroneckerProductLayer: input_dim=%d, output_dim=%d, "
+      "reduced_rank=%d, rounded_input_dim=%d, rounded_output_dim=%d, "
+      "extended_input_dim=%d, extended_output_dim=%d, kron_dim=%d, reduction=%.2f%%",
+      self.input_dim,
+      self.output_dim,
+      self.reduced_rank,
+      self.rounded_input_dim,
+      self.rounded_output_dim,
+      self.extended_input_dim,
+      self.extended_output_dim,
+      self.kron_dim,
+      reduction_percentage,
     )
 
 
@@ -108,10 +116,9 @@ def demo() -> None:
   skp_layer = StackedKroneckerProductLayer(input_dim=input_dim, output_dim=output_dim, scale=scale)
   output: Tensor = skp_layer(input)
 
-  # Print shapes and sample output
-  print(f"Input shape: {input.shape}")
-  print(f"Output shape: {output.shape}")
-  print(f"Sample output:\n{output}")
+  logger.info("Input shape: %s", input.shape)
+  logger.info("Output shape: %s", output.shape)
+  logger.debug("Sample output:\n%s", output)
 
 
 if __name__ == "__main__":

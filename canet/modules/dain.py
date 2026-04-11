@@ -1,5 +1,6 @@
 """Deep Adaptive Input Normalization (DAIN) module."""
 
+import logging
 from typing import Literal
 
 import lightning as L
@@ -9,6 +10,8 @@ import torch.nn as nn
 from torch import Tensor
 
 _DAIN_EPS: float = 1e-8
+
+logger = logging.getLogger(__name__)
 
 
 class DAIN(L.LightningModule):
@@ -128,10 +131,9 @@ def demo() -> None:
   dain = DAIN(mode=mode, input_dim=dimension)
   output: Tensor = dain(input)
 
-  # Print shapes and sample output
-  print(f"Input shape: {input.shape}")
-  print(f"Output shape: {output.shape}")
-  print(f"Sample output:\n{output}")
+  logger.info("Input shape: %s", input.shape)
+  logger.info("Output shape: %s", output.shape)
+  logger.debug("Sample output:\n%s", output)
 
 
 if __name__ == "__main__":
