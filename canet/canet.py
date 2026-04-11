@@ -218,7 +218,7 @@ class TrainedCANet(L.LightningModule):
 
     mse: Tensor = self.mse(preds.contiguous(), trues.contiguous())
     mae: Tensor = self.mae(preds, trues)
-    print(f"{mae, mse}")
+    print(f"MAE: {mae:.4f}, MSE: {mse:.4f}")
 
 
 def demo() -> None:
