@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import os
 import warnings
 
+import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Dataset
@@ -13,16 +16,16 @@ warnings.filterwarnings("ignore")
 class Dataset_ETT_hour(Dataset):
   def __init__(
     self,
-    root_path,
-    flag="train",
-    size=None,
-    features="S",
-    data_path="ETTh1.csv",
-    target="OT",
-    scale=True,
-    timeenc=0,
-    freq="h",
-  ):
+    root_path: str,
+    flag: str = "train",
+    size: list[int] | None = None,
+    features: str = "S",
+    data_path: str = "ETTh1.csv",
+    target: str = "OT",
+    scale: bool = True,
+    timeenc: int = 0,
+    freq: str = "h",
+  ) -> None:
     # size [seq_len, label_len, pred_len]
     # info
     if size == None:
@@ -49,7 +52,7 @@ class Dataset_ETT_hour(Dataset):
 
     self.__read_data__()
 
-  def __read_data__(self):
+  def __read_data__(self) -> None:
     self.scaler = StandardScaler()
     df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
 
@@ -87,7 +90,9 @@ class Dataset_ETT_hour(Dataset):
     self.data_y = data[border1:border2]
     self.data_stamp = data_stamp
 
-  def __getitem__(self, index):
+  def __getitem__(
+    self, index: int
+  ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     s_begin = index
     s_end = s_begin + self.seq_len
     r_begin = s_end - self.label_len
@@ -102,26 +107,26 @@ class Dataset_ETT_hour(Dataset):
 
     return seq_x, seq_y, seq_x_mark, seq_y_mark
 
-  def __len__(self):
+  def __len__(self) -> int:
     return len(self.data_x) - self.seq_len - self.pred_len + 1
 
-  def inverse_transform(self, data):
+  def inverse_transform(self, data: np.ndarray) -> np.ndarray:
     return self.scaler.inverse_transform(data)
 
 
 class Dataset_ETT_minute(Dataset):
   def __init__(
     self,
-    root_path,
-    flag="train",
-    size=None,
-    features="S",
-    data_path="ETTm1.csv",
-    target="OT",
-    scale=True,
-    timeenc=0,
-    freq="t",
-  ):
+    root_path: str,
+    flag: str = "train",
+    size: list[int] | None = None,
+    features: str = "S",
+    data_path: str = "ETTm1.csv",
+    target: str = "OT",
+    scale: bool = True,
+    timeenc: int = 0,
+    freq: str = "t",
+  ) -> None:
     # size [seq_len, label_len, pred_len]
     # info
     if size == None:
@@ -147,7 +152,7 @@ class Dataset_ETT_minute(Dataset):
     self.data_path = data_path
     self.__read_data__()
 
-  def __read_data__(self):
+  def __read_data__(self) -> None:
     self.scaler = StandardScaler()
     df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
 
@@ -195,7 +200,9 @@ class Dataset_ETT_minute(Dataset):
     self.data_y = data[border1:border2]
     self.data_stamp = data_stamp
 
-  def __getitem__(self, index):
+  def __getitem__(
+    self, index: int
+  ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     s_begin = index
     s_end = s_begin + self.seq_len
     r_begin = s_end - self.label_len
@@ -208,27 +215,27 @@ class Dataset_ETT_minute(Dataset):
 
     return seq_x, seq_y, seq_x_mark, seq_y_mark
 
-  def __len__(self):
+  def __len__(self) -> int:
     return len(self.data_x) - self.seq_len - self.pred_len + 1
 
-  def inverse_transform(self, data):
+  def inverse_transform(self, data: np.ndarray) -> np.ndarray:
     return self.scaler.inverse_transform(data)
 
 
 class Dataset_Custom(Dataset):
   def __init__(
     self,
-    root_path,
-    flag="train",
-    size=None,
-    features="S",
-    data_path="ETTh1.csv",
-    target="OT",
-    scale=True,
-    timeenc=0,
-    freq="h",
-    seasonal_patterns=None,
-  ):
+    root_path: str,
+    flag: str = "train",
+    size: list[int] | None = None,
+    features: str = "S",
+    data_path: str = "ETTh1.csv",
+    target: str = "OT",
+    scale: bool = True,
+    timeenc: int = 0,
+    freq: str = "h",
+    seasonal_patterns: str | None = None,
+  ) -> None:
     # size [seq_len, label_len, pred_len]
     # info
     if size == None:
@@ -254,7 +261,7 @@ class Dataset_Custom(Dataset):
     self.data_path = data_path
     self.__read_data__()
 
-  def __read_data__(self):
+  def __read_data__(self) -> None:
     self.scaler = StandardScaler()
     df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
 
@@ -302,7 +309,9 @@ class Dataset_Custom(Dataset):
     self.data_y = data[border1:border2]
     self.data_stamp = data_stamp
 
-  def __getitem__(self, index):
+  def __getitem__(
+    self, index: int
+  ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     s_begin = index
     s_end = s_begin + self.seq_len
     r_begin = s_end - self.label_len
@@ -315,8 +324,8 @@ class Dataset_Custom(Dataset):
 
     return seq_x, seq_y, seq_x_mark, seq_y_mark
 
-  def __len__(self):
+  def __len__(self) -> int:
     return len(self.data_x) - self.seq_len - self.pred_len + 1
 
-  def inverse_transform(self, data):
+  def inverse_transform(self, data: np.ndarray) -> np.ndarray:
     return self.scaler.inverse_transform(data)

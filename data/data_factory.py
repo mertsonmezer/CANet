@@ -1,4 +1,6 @@
-from torch.utils.data import DataLoader
+from __future__ import annotations
+
+from torch.utils.data import DataLoader, Dataset
 
 from config.canet_config import CANetTrainConfig
 from data.data_loader import Dataset_Custom, Dataset_ETT_hour, Dataset_ETT_minute
@@ -12,7 +14,7 @@ data_dict = {
 }
 
 
-def data_provider(config: CANetTrainConfig, flag: str):
+def data_provider(config: CANetTrainConfig, flag: str) -> tuple[Dataset, DataLoader]:
   Data = data_dict[config.data_config.data_name]
   timeenc = 0 if config.data_config.embed != "timeF" else 1
 
