@@ -1,19 +1,19 @@
 import argparse
-import shutil
-import os
-import json
 import glob
+import json
+import os
+import shutil
 from dataclasses import asdict
 from functools import partial
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import lightning as L
 import optuna
 import pandas as pd
 import torch
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, TQDMProgressBar
-from optuna.trial._frozen import FrozenTrial
 from optuna.samplers import TPESampler
+from optuna.trial._frozen import FrozenTrial
 from torch.utils.data import DataLoader
 
 from config.net_config import DataConfig, TrainConfig
@@ -76,7 +76,7 @@ def train_model(
   trainer.fit(model, train_dataloader, val_dataloader)
 
   # Load the best checkpoint after training
-  model: TrainedNet = TrainedNet.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+  model: TrainedNet = TrainedNet.load_from_checkpoint(trainer.checkpoint_callback.best_model_path, weights_only=False)
 
   # Test the model on validation and test datasets
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)

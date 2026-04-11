@@ -12,13 +12,13 @@ Usage:
 """
 
 import argparse
+import glob
+import json
 import os
 import sys
-import json
-import glob
 from dataclasses import asdict
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent
@@ -141,7 +141,7 @@ def train_model(
   trainer.fit(model, train_dataloader, val_dataloader)
 
   # Load the best checkpoint after training
-  model: TrainedNet = TrainedNet.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+  model: TrainedNet = TrainedNet.load_from_checkpoint(trainer.checkpoint_callback.best_model_path, weights_only=False)
 
   # Test the model on validation and test datasets
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)

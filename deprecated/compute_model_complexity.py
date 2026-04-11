@@ -1,11 +1,13 @@
-from models.net import TrainedNet
-import torch
 import time
+
+import torch
+
 from data.data_factory import data_provider
+from models.net import TrainedNet
 
 # Load the model from the .ckpt file
 ckpt_path = "results/Exchange/custom-SeqLen96-PredLen720-FirstNormlayer-SecondNormadain-MPTrue-RankReductionTrue-Trial82/train-epoch=1.ckpt"
-model = TrainedNet.load_from_checkpoint(ckpt_path)  # Initialize your model architecture
+model = TrainedNet.load_from_checkpoint(ckpt_path, weights_only=False)  # Initialize your model architecture
 model.eval()
 
 test_data, test_dataloader = data_provider(model.config, flag="test")

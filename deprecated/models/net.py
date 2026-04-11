@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from typing import Any, Dict, List, Tuple
 
 import lightning as L
@@ -8,19 +9,18 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
 
 from config.net_config import TrainConfig
-from layers.net_layers import NetLayer
-from layers.revin import RevIN
-from layers.sklinear import SKLinear
 
 ############# DISH TS imports #############
 from layers.DishTS import DishTS
-from types import SimpleNamespace
 
 ############# FAN imports #############
 from layers.fan import FAN
+from layers.net_layers import NetLayer
+from layers.revin import RevIN
 
 ############# SAN imports #############
 from layers.san import Statistics_prediction
+from layers.sklinear import SKLinear
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -140,7 +140,7 @@ class TrainedNet(L.LightningModule):
   def configure_optimizers(self) -> Dict[str, Any]:
     optimizer = optim.AdamW(self.model.parameters(), lr=self.lr, weight_decay=self.config.weight_decay)
     scheduler: Dict[str, Any] = {
-      "scheduler": ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=2, verbose=True),
+      "scheduler": ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=2),
       "monitor": "val_mse",
       "interval": "epoch",
       "frequency": 1,
@@ -161,7 +161,7 @@ class TrainedNet(L.LightningModule):
     true: Tensor = batch_y.detach().cpu()
 
     mse: Tensor = self.mse(pred.contiguous(), true.contiguous())
-    mae: Tensor = self.mae(pred, true)
+    mae: Tensor = self.mae(pred.contiguous(), true.contiguous())
 
     # Logging for both step and epoch
     self.log(
@@ -201,5 +201,5 @@ class TrainedNet(L.LightningModule):
     trues = trues.reshape(-1, trues.shape[-2], trues.shape[-1])
 
     mse: Tensor = self.mse(preds.contiguous(), trues.contiguous())
-    mae: Tensor = self.mae(preds, trues)
+    mae: Tensor = self.mae(preds.contiguous(), trues.contiguous())
     print(f"{mae, mse}")
