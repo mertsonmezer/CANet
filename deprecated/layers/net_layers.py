@@ -302,7 +302,7 @@ class NetLayer(L.LightningModule):
 
     if self.config.first_norm_layer == "adain":
       mean, std = self.mean_std_proj(mean, std)
-      # mean, std = self.style_blend_gate(mean, std, style_mean, style_std)
+      mean, std = self.style_blend_gate(mean, std, style_mean, style_std)
       # mean, std = self.linear_combination(mean, std, style_mean, style_std)
       x_patched = self.norm_layer1(x_patched, mean, std)
     else:
@@ -312,7 +312,7 @@ class NetLayer(L.LightningModule):
 
     if self.config.second_norm_layer == "adain":
       mean, std = self.mean_std_proj(mean, std)
-      # mean, std = self.style_blend_gate(mean, std, style_mean, style_std)
+      mean, std = self.style_blend_gate(mean, std, style_mean, style_std)
       # mean, std = self.linear_combination(mean, std, style_mean, style_std)
       x_patched = self.norm_layer2(x_patched, mean, std)
     else:
