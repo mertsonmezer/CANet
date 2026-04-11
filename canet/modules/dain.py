@@ -8,6 +8,8 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
+_DAIN_EPS: float = 1e-8
+
 
 class DAIN(L.LightningModule):
   """Deep Adaptive Input Normalization with four operating modes.
@@ -54,7 +56,7 @@ class DAIN(L.LightningModule):
     self.gating_layer = nn.Linear(input_dim, input_dim)
 
     # Small epsilon value for numerical stability
-    self.eps = 1e-8
+    self.eps = _DAIN_EPS
 
   def forward(self, x: Tensor) -> Tensor:
     if self.mode is None:

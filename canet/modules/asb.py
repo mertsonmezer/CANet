@@ -6,6 +6,9 @@ import torch.nn as nn
 from timm.models.layers import trunc_normal_
 from torch import Tensor
 
+_WEIGHT_INIT_STD: float = 0.02
+_SPECTRAL_EPS: float = 1e-6
+
 
 class AdaptiveSpectralBlock(L.LightningModule):
   """Frequency-domain feature transformation with adaptive masking.
@@ -23,11 +26,11 @@ class AdaptiveSpectralBlock(L.LightningModule):
 
   def __init__(self, dim: int) -> None:
     super().__init__()
-    self.complex_weight_high = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * 0.02)
-    self.complex_weight = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * 0.02)
+    self.complex_weight_high = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * _WEIGHT_INIT_STD)
+    self.complex_weight = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * _WEIGHT_INIT_STD)
 
-    trunc_normal_(self.complex_weight_high, std=0.02)
-    trunc_normal_(self.complex_weight, std=0.02)
+    trunc_normal_(self.complex_weight_high, std=_WEIGHT_INIT_STD)
+    trunc_normal_(self.complex_weight, std=_WEIGHT_INIT_STD)
     self.threshold_param = nn.Parameter(torch.rand(1))
 
   def create_adaptive_high_freq_mask(self, x_fft: Tensor) -> Tensor:
@@ -53,7 +56,7 @@ class AdaptiveSpectralBlock(L.LightningModule):
     median_energy = median_energy.view(B, 1)  # Reshape to match the original dimensions
 
     # Normalize energy
-    normalized_energy: Tensor = energy / (median_energy + 1e-6)
+    normalized_energy: Tensor = energy / (median_energy + _SPECTRAL_EPS)
 
     adaptive_mask: Tensor = (
       (normalized_energy > self.threshold_param).float() - self.threshold_param

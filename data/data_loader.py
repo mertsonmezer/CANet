@@ -14,6 +14,10 @@ from data.timefeatures import time_features
 
 warnings.filterwarnings("ignore")
 
+_DEFAULT_SEQ_LEN: int = 24 * 4 * 4
+_DEFAULT_LABEL_LEN: int = 24 * 4
+_ETT_HOUR_TRAIN_BORDER: int = 12 * 30 * 24
+
 
 class Dataset_ETT_hour(Dataset):
   """Hourly ETT (Electricity Transformer Temperature) dataset.
@@ -47,10 +51,10 @@ class Dataset_ETT_hour(Dataset):
   ) -> None:
     # size [seq_len, label_len, pred_len]
     # info
-    if size == None:
-      self.seq_len = 24 * 4 * 4
-      self.label_len = 24 * 4
-      self.pred_len = 24 * 4
+    if size is None:
+      self.seq_len = _DEFAULT_SEQ_LEN
+      self.label_len = _DEFAULT_LABEL_LEN
+      self.pred_len = _DEFAULT_LABEL_LEN
     else:
       self.seq_len = size[0]
       self.label_len = size[1]
@@ -76,8 +80,16 @@ class Dataset_ETT_hour(Dataset):
     self.scaler = StandardScaler()
     df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
 
-    border1s = [0, 12 * 30 * 24 - self.seq_len, 12 * 30 * 24 + 4 * 30 * 24 - self.seq_len]
-    border2s = [12 * 30 * 24, 12 * 30 * 24 + 4 * 30 * 24, 12 * 30 * 24 + 8 * 30 * 24]
+    border1s = [
+      0,
+      _ETT_HOUR_TRAIN_BORDER - self.seq_len,
+      _ETT_HOUR_TRAIN_BORDER + 4 * 30 * 24 - self.seq_len,
+    ]
+    border2s = [
+      _ETT_HOUR_TRAIN_BORDER,
+      _ETT_HOUR_TRAIN_BORDER + 4 * 30 * 24,
+      _ETT_HOUR_TRAIN_BORDER + 8 * 30 * 24,
+    ]
     border1 = border1s[self.set_type]
     border2 = border2s[self.set_type]
 
@@ -166,10 +178,10 @@ class Dataset_ETT_minute(Dataset):
   ) -> None:
     # size [seq_len, label_len, pred_len]
     # info
-    if size == None:
-      self.seq_len = 24 * 4 * 4
-      self.label_len = 24 * 4
-      self.pred_len = 24 * 4
+    if size is None:
+      self.seq_len = _DEFAULT_SEQ_LEN
+      self.label_len = _DEFAULT_LABEL_LEN
+      self.pred_len = _DEFAULT_LABEL_LEN
     else:
       self.seq_len = size[0]
       self.label_len = size[1]
@@ -194,15 +206,16 @@ class Dataset_ETT_minute(Dataset):
     self.scaler = StandardScaler()
     df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
 
+    _ett_min_border: int = _ETT_HOUR_TRAIN_BORDER * 4
     border1s = [
       0,
-      12 * 30 * 24 * 4 - self.seq_len,
-      12 * 30 * 24 * 4 + 4 * 30 * 24 * 4 - self.seq_len,
+      _ett_min_border - self.seq_len,
+      _ett_min_border + 4 * 30 * 24 * 4 - self.seq_len,
     ]
     border2s = [
-      12 * 30 * 24 * 4,
-      12 * 30 * 24 * 4 + 4 * 30 * 24 * 4,
-      12 * 30 * 24 * 4 + 8 * 30 * 24 * 4,
+      _ett_min_border,
+      _ett_min_border + 4 * 30 * 24 * 4,
+      _ett_min_border + 8 * 30 * 24 * 4,
     ]
     border1 = border1s[self.set_type]
     border2 = border2s[self.set_type]
@@ -291,10 +304,10 @@ class Dataset_Custom(Dataset):
   ) -> None:
     # size [seq_len, label_len, pred_len]
     # info
-    if size == None:
-      self.seq_len = 24 * 4 * 4
-      self.label_len = 24 * 4
-      self.pred_len = 24 * 4
+    if size is None:
+      self.seq_len = _DEFAULT_SEQ_LEN
+      self.label_len = _DEFAULT_LABEL_LEN
+      self.pred_len = _DEFAULT_LABEL_LEN
     else:
       self.seq_len = size[0]
       self.label_len = size[1]

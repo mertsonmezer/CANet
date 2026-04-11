@@ -6,6 +6,8 @@ import torch.nn as nn
 from einops import rearrange
 from torch import Tensor
 
+_ADAIN_EPS: float = 1e-5
+
 
 class StyleBlendingGate(L.LightningModule):
   """Blends two style statistics (mean and std) with a learnable ratio.
@@ -108,7 +110,7 @@ class AdaIN(L.LightningModule):
 
   def __init__(self) -> None:
     super().__init__()
-    self.eps = 1e-5
+    self.eps = _ADAIN_EPS
 
   def forward(self, x: Tensor, style_mean: Tensor, style_std: Tensor) -> Tensor:
     mean_x: Tensor = torch.mean(x, dim=1, keepdim=True).detach()

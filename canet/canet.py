@@ -14,6 +14,9 @@ from canet.modules.skp_layer import StackedKroneckerProductLayer
 from config.canet_config import CANetTrainConfig
 from utils.utils import DEVICE
 
+_INSTANCE_NORM_EPS: float = 1e-5
+_GRAD_CLIP_NORM: float = 4.0
+
 
 class CANet(L.LightningModule):
   """Multi-resolution time-series forecasting network.
@@ -73,8 +76,7 @@ class CANet(L.LightningModule):
     # Instance Normalization
     mean: Tensor = x.mean(dim=1, keepdim=True)
     std: Tensor = x.std(dim=1, keepdim=True)
-    eps: float = 1e-5
-    x = (x - mean) / (std + eps)
+    x = (x - mean) / (std + _INSTANCE_NORM_EPS)
 
     xs_patched: list[Tensor] = []
     for layer in self.net_layers:
@@ -205,7 +207,7 @@ class TrainedCANet(L.LightningModule):
     return {"test_loss": loss, "pred": pred, "true": true}
 
   def on_train_batch_end(self, outputs: Any, batch: Tensor, batch_idx: int) -> None:
-    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=4.0)
+    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=_GRAD_CLIP_NORM)
 
   def on_test_epoch_end(self) -> None:
     preds: Tensor = torch.cat(self.preds)

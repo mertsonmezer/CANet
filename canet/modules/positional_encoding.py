@@ -7,6 +7,8 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
+_SINUSOIDAL_BASE: float = 10000.0
+
 
 def sin_cos_positional_encoding(
   sequence_length: int, embedding_dim: int, normalize: bool = False
@@ -27,7 +29,7 @@ def sin_cos_positional_encoding(
 
   # Compute the scaling term for sine and cosine functions
   frequency_scaling: Tensor = torch.exp(
-    torch.arange(0, embedding_dim, 2) * -(math.log(10000.0) / embedding_dim)
+    torch.arange(0, embedding_dim, 2) * -(math.log(_SINUSOIDAL_BASE) / embedding_dim)
   )
 
   # Apply sine to even indices and cosine to odd indices
