@@ -1,8 +1,9 @@
-import optuna
+import argparse
+
 import numpy as np
+import optuna
 import scipy.stats as stats
 from optuna.visualization import plot_slice
-import argparse
 
 # Set up argument parser
 parser = argparse.ArgumentParser(description="Analyze Optuna study results.")

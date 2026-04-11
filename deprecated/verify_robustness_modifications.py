@@ -6,8 +6,8 @@ This script performs a dry run to verify that the modifications work correctly
 without actually running the full training process.
 """
 
-import sys
 import os
+import sys
 
 sys.path.append("/home/pc-amax-2/Desktop/Mert/Mert-recovered/Mert/Net_final")
 
@@ -17,7 +17,7 @@ def test_functions():
 
   try:
     # Import the modified script functions
-    from forecasting.train_tune_gpu0 import check_mse_match, PATCH_SIZES, BATCH_SIZES, EMBED_DIMS
+    from forecasting.train_tune_gpu0 import BATCH_SIZES, EMBED_DIMS, PATCH_SIZES, check_mse_match
 
     print("✓ Successfully imported modified functions")
 

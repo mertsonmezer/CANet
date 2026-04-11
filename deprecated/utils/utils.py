@@ -1,8 +1,9 @@
-import torch
+import argparse
+import inspect
 import os
 import shutil
-import inspect
-import argparse
+
+import torch
 
 
 def list_of_ints(arg):

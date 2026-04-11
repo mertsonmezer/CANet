@@ -1,6 +1,7 @@
+import math
+
 import torch
 import torch.nn as nn
-import math
 
 
 def PositionalEncoding(q_len, d_model, normalize=False):

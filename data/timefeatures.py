@@ -12,14 +12,14 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
+from datetime import datetime
+from distutils.util import strtobool
 from typing import List
 
 import numpy as np
 import pandas as pd
 from pandas.tseries import offsets
 from pandas.tseries.frequencies import to_offset
-from distutils.util import strtobool
-from datetime import datetime
 
 
 class TimeFeature:
