@@ -1,4 +1,4 @@
-for seq_len in 24 48 96 192 336
+for seq_len in 24 48 96 192 336 720
 do
   python3 -m forecasting.train_tune \
     --data_name "ETTm2" \
