@@ -17,6 +17,16 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class CANet(L.LightningModule):
+  """Multi-resolution time-series forecasting network.
+
+  Stacks CANetLayer blocks (one per patch size), concatenates their outputs
+  across all patches and channels, then projects to the prediction horizon via
+  an optional Stacked Kronecker Product layer followed by a linear head.
+
+  Args:
+    config: CANetTrainConfig holding architecture and training hyper-parameters.
+  """
+
   def __init__(self, config: CANetTrainConfig) -> None:
     super().__init__()
     self.config: CANetTrainConfig = config
@@ -80,6 +90,15 @@ class CANet(L.LightningModule):
 
 
 class TrainedCANet(L.LightningModule):
+  """Lightning training wrapper around CANet.
+
+  Handles MSE loss, metric logging (MSE/MAE via torchmetrics), AdamW
+  optimisation with ReduceLROnPlateau scheduling, and gradient clipping.
+
+  Args:
+    config: CANetTrainConfig holding architecture and training hyper-parameters.
+  """
+
   def __init__(self, config: CANetTrainConfig) -> None:
     super().__init__()
     self.config: CANetTrainConfig = config

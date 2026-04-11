@@ -10,6 +10,23 @@ from torch import Tensor
 
 
 class DAIN(L.LightningModule):
+  """Deep Adaptive Input Normalization with four operating modes.
+
+  Modes (controlled by the ``mode`` argument):
+    ``"avg"``: subtract the channel mean.
+    ``"adaptive_avg"``: subtract a learned linear projection of the mean.
+    ``"adaptive_scale"``: adaptive mean + learned standard-deviation scaling.
+    ``"full"``: adaptive mean + scaling + learned sigmoid gate.
+    ``None``: identity (no normalization).
+
+  Args:
+    mode: Normalization mode (see above); default ``"full"``.
+    mean_lr: Learning-rate hint for the mean layer (informational only).
+    gate_lr: Learning-rate hint for the gating layer.
+    scale_lr: Learning-rate hint for the scaling layer.
+    input_dim: Number of input channels; default 144.
+  """
+
   def __init__(
     self,
     mode: Literal["avg", "adaptive_avg", "adaptive_scale", "full", None] = "full",

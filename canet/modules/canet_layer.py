@@ -16,6 +16,21 @@ from config.canet_config import CANetTrainConfig
 
 
 class CANetLayer(L.LightningModule):
+  """Single processing block of CANet.
+
+  Converts an input sequence to overlapping patches, applies a learned
+  positional encoding, projects to an embedding space, runs
+  AdaptiveSpectralBlock for frequency filtering, applies a configurable
+  normalization layer, then InteractiveConvolutionalBlock with a residual
+  drop-path connection.
+
+  Args:
+    patch_size: Length of each temporal patch.
+    config: CANetTrainConfig with embedding, normalization, and dropout settings.
+    mlp_ratio: Hidden-dim multiplier for the ICB; default 3.0.
+    drop_path_ratio: Stochastic depth drop probability; default 0.0.
+  """
+
   def __init__(
     self,
     patch_size: int,

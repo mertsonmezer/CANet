@@ -11,6 +11,25 @@ from utils.utils import round_up_sqrt
 
 
 class StackedKroneckerProductLayer(L.LightningModule):
+  """Parameter-efficient linear layer using a Stacked Kronecker Product.
+
+  Approximates an ``(input_dim × output_dim)`` weight matrix as the Kronecker
+  product of two low-rank matrices, reducing the parameter count by roughly
+  ``1 / (2 * scale)``.
+
+  Args:
+    input_dim: Input feature dimension.
+    output_dim: Output feature dimension.
+    scale: Controls the reduced rank; 0.5 gives ≈50% of the full parameter
+      count. Default 0.5.
+    verbose: If True, prints layer configuration on construction.
+
+  Raises:
+    ValueError: If ``input_dim`` or ``output_dim`` is not a positive integer.
+    ValueError: If the input tensor's last dimension does not match
+      ``input_dim``.
+  """
+
   def __init__(self, input_dim: int, output_dim: int, scale: float = 0.5, verbose: bool = False) -> None:
     super().__init__()
 

@@ -6,6 +6,17 @@ from torch import Tensor
 
 
 class InteractiveConvolutionalBlock(L.LightningModule):
+  """Interactive dual-path convolutional block.
+
+  Runs two parallel 1-D convolutions (kernel sizes 1 and 3) and combines them
+  via cross-multiplication: ``conv3(path1 * act(path2) + path2 * act(path1))``.
+
+  Args:
+    in_features: Input and output feature dimension.
+    hidden_features: Intermediate channel width.
+    drop: Dropout probability applied after each activation; default 0.0.
+  """
+
   def __init__(self, in_features: int, hidden_features: int, drop: float = 0.0) -> None:
     super().__init__()
     self.conv1 = nn.Conv1d(in_features, hidden_features, 1)

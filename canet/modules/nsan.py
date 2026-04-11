@@ -8,6 +8,17 @@ from torch import Tensor
 
 
 class StyleBlendingGate(L.LightningModule):
+  """Blends two style statistics (mean and std) with a learnable ratio.
+
+  Optionally applies per-channel affine parameters to each style before
+  blending, then passes the result through a linear projection.
+
+  Args:
+    embed_dim: Feature dimension of the style statistics.
+    blend_ratio: Convex combination weight for the first style; default 0.1.
+    affine: If True, applies learnable per-channel scale/shift; default True.
+  """
+
   def __init__(self, embed_dim: int, blend_ratio: float = 0.1, affine: bool = True) -> None:
     super().__init__()
     self.embed_dim: int = embed_dim
@@ -43,6 +54,16 @@ class StyleBlendingGate(L.LightningModule):
 
 
 class MeanStdProjector(L.LightningModule):
+  """Projects per-channel mean and std statistics into embedding space.
+
+  Rearranges the ``(batch, seq, channel)`` statistics tensors and maps each
+  scalar statistic to an embedding vector via a linear layer with dropout.
+
+  Args:
+    embed_dim: Target embedding dimension.
+    dropout_rate: Dropout probability applied after the linear projection.
+  """
+
   def __init__(self, embed_dim: int, dropout_rate: float) -> None:
     super().__init__()
 
@@ -74,6 +95,17 @@ class MeanStdProjector(L.LightningModule):
 
 
 class AdaIN(L.LightningModule):
+  """Adaptive Instance Normalization for feature-space style transfer.
+
+  Normalizes ``x`` to zero mean and unit standard deviation, then re-scales
+  and shifts using the provided style statistics.
+
+  Shape:
+    x: ``(B, N, C)`` — batch, patches, embedding.
+    style_mean / style_std: broadcastable to x.
+    Output: same shape as x.
+  """
+
   def __init__(self) -> None:
     super().__init__()
     self.eps = 1e-5

@@ -16,6 +16,23 @@ warnings.filterwarnings("ignore")
 
 
 class Dataset_ETT_hour(Dataset):
+  """Hourly ETT (Electricity Transformer Temperature) dataset.
+
+  Applies a fixed 12/4/4 month train/val/test split. Supports multivariate
+  (M), univariate (S), and multivariate-with-single-target (MS) feature modes.
+
+  Args:
+    root_path: Directory containing the CSV file.
+    flag: Split to load — ``"train"``, ``"val"``, or ``"test"``.
+    size: ``[seq_len, label_len, pred_len]``; defaults to ``[384, 96, 96]``.
+    features: Feature mode — ``"M"``, ``"S"``, or ``"MS"``.
+    data_path: CSV file name; default ``"ETTh1.csv"``.
+    target: Target column name; default ``"OT"``.
+    scale: If True, applies StandardScaler fitted on the training split.
+    timeenc: 0 for manual time encoding, 1 for Fourier time features.
+    freq: Frequency string used for Fourier encoding; default ``"h"``.
+  """
+
   def __init__(
     self,
     root_path: str,
@@ -117,6 +134,23 @@ class Dataset_ETT_hour(Dataset):
 
 
 class Dataset_ETT_minute(Dataset):
+  """Minute-resolution ETT dataset (15-minute intervals).
+
+  Identical to ``Dataset_ETT_hour`` but uses a 4× timestep multiplier for
+  border calculation and extracts a discretized minute feature.
+
+  Args:
+    root_path: Directory containing the CSV file.
+    flag: Split to load — ``"train"``, ``"val"``, or ``"test"``.
+    size: ``[seq_len, label_len, pred_len]``; defaults to ``[384, 96, 96]``.
+    features: Feature mode — ``"M"``, ``"S"``, or ``"MS"``.
+    data_path: CSV file name; default ``"ETTm1.csv"``.
+    target: Target column name; default ``"OT"``.
+    scale: If True, applies StandardScaler fitted on the training split.
+    timeenc: 0 for manual time encoding, 1 for Fourier time features.
+    freq: Frequency string used for Fourier encoding; default ``"t"``.
+  """
+
   def __init__(
     self,
     root_path: str,
@@ -225,6 +259,21 @@ class Dataset_ETT_minute(Dataset):
 
 
 class Dataset_Custom(Dataset):
+  """Generic CSV dataset with flexible 70/20/10 train/val/test splits.
+
+  Args:
+    root_path: Directory containing the CSV file.
+    flag: Split to load — ``"train"``, ``"val"``, or ``"test"``.
+    size: ``[seq_len, label_len, pred_len]``; defaults to ``[384, 96, 96]``.
+    features: Feature mode — ``"M"``, ``"S"``, or ``"MS"``.
+    data_path: CSV file name; default ``"ETTh1.csv"``.
+    target: Target column name; default ``"OT"``.
+    scale: If True, applies StandardScaler fitted on the training split.
+    timeenc: 0 for manual time encoding, 1 for Fourier time features.
+    freq: Frequency string used for Fourier encoding; default ``"h"``.
+    seasonal_patterns: Unused; kept for API compatibility.
+  """
+
   def __init__(
     self,
     root_path: str,

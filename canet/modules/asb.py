@@ -8,6 +8,19 @@ from torch import Tensor
 
 
 class AdaptiveSpectralBlock(L.LightningModule):
+  """Frequency-domain feature transformation with adaptive masking.
+
+  Applies learned complex weights in the frequency domain and attenuates
+  low-energy high-frequency components via an energy-normalised adaptive mask.
+
+  Args:
+    dim: Feature dimension (number of channels C).
+
+  Shape:
+    Input:  ``(B, N, C)`` — batch, sequence length, channels.
+    Output: ``(B, N, C)`` — same shape as input.
+  """
+
   def __init__(self, dim: int) -> None:
     super().__init__()
     self.complex_weight_high = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * 0.02)
