@@ -14,7 +14,7 @@ do
     --patch_sizes "[[8, 32], [8, 48], [8, 64], [16, 48], [16, 64]]" \
     --num_trials 100 \
     --num_epochs 20 \
-    --batch_sizes 32 64 128 256 512 \
+    --batch_sizes 16 32 64 128 256 \
     --seq_len 96 \
     --pred_len $pred_len \
     --low_lr 0.0001 \
