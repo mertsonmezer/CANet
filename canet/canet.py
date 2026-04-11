@@ -61,6 +61,14 @@ class CANet(L.LightningModule):
     self.fc2 = nn.Linear(self.config.output_features, self.config.pred_len)
 
   def forward(self, x: Tensor) -> Tensor:
+    """Run CANet forward pass with instance norm and de-normalization.
+
+    Args:
+      x: Input tensor of shape ``(B, seq_len, M)``.
+
+    Returns:
+      Prediction tensor of shape ``(B, pred_len, M)``.
+    """
     B, _, M = x.shape
 
     # Instance Normalization
@@ -116,9 +124,23 @@ class TrainedCANet(L.LightningModule):
     self.save_hyperparameters()
 
   def forward(self, x: Tensor) -> Tensor:
+    """Delegate to the underlying CANet model.
+
+    Args:
+      x: Input tensor of shape ``(B, seq_len, M)``.
+
+    Returns:
+      Prediction tensor of shape ``(B, pred_len, M)``.
+    """
     return self.model(x)
 
   def configure_optimizers(self) -> dict[str, Any]:
+    """Build AdamW optimizer with ReduceLROnPlateau scheduler.
+
+    Returns:
+      Lightning-compatible dict with ``"optimizer"`` and ``"lr_scheduler"``
+      keys; the scheduler monitors ``"val_mse"``.
+    """
     optimizer = optim.AdamW(
       self.model.parameters(), lr=self.lr, weight_decay=self.config.weight_decay
     )
@@ -131,6 +153,17 @@ class TrainedCANet(L.LightningModule):
     return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
   def _calculate_loss(self, batch: Tensor, mode: str = "train") -> tuple[Tensor, Tensor, Tensor]:
+    """Compute MSE loss and log MSE/MAE metrics for one batch.
+
+    Args:
+      batch: Tuple of ``(batch_x, batch_y, x_mark, y_mark)`` from the
+        DataLoader.
+      mode: Metric prefix — ``"train"``, ``"val"``, or ``"test"``.
+
+    Returns:
+      Tuple of ``(loss, pred, true)`` where loss is the MSE scalar and
+      pred/true are CPU tensors of shape ``(B, pred_len, M)``.
+    """
     batch_x, batch_y, _, _ = batch
     batch_x: Tensor = batch_x.float().to(DEVICE)
     batch_y: Tensor = batch_y.float().to(DEVICE)

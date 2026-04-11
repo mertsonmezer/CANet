@@ -101,6 +101,16 @@ class CANetLayer(L.LightningModule):
     )
 
   def forward(self, x: Tensor, mean: Tensor, std: Tensor) -> Tensor:
+    """Process a sequence through patching, spectral filtering, and ICB.
+
+    Args:
+      x: Input of shape ``(B, seq_len, M)``.
+      mean: Per-sequence mean of shape ``(B, 1, M)`` for NSAN style injection.
+      std: Per-sequence std of shape ``(B, 1, M)`` for NSAN style injection.
+
+    Returns:
+      Output patch embeddings of shape ``(B*M, num_patches, embed_dim)``.
+    """
     x = rearrange(x, "b l m -> b m l")
 
     # Patching + Positional Encoding

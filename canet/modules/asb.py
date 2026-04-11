@@ -31,6 +31,17 @@ class AdaptiveSpectralBlock(L.LightningModule):
     self.threshold_param = nn.Parameter(torch.rand(1))
 
   def create_adaptive_high_freq_mask(self, x_fft: Tensor) -> Tensor:
+    """Build a soft mask that passes high-energy frequency components.
+
+    Computes per-patch energy, normalises by the median energy, and
+    produces a differentiable mask via the straight-through estimator.
+
+    Args:
+      x_fft: Complex FFT output of shape ``(B, N, C)``.
+
+    Returns:
+      Binary-like mask of shape ``(B, N, 1)`` for broadcasting over C.
+    """
     B, _, _ = x_fft.shape
 
     # Calculate energy in the frequency domain
@@ -52,6 +63,14 @@ class AdaptiveSpectralBlock(L.LightningModule):
     return adaptive_mask
 
   def forward(self, x_in: Tensor) -> Tensor:
+    """Apply FFT, adaptive masking, learned weights, and IFFT.
+
+    Args:
+      x_in: Input tensor of shape ``(B, N, C)``.
+
+    Returns:
+      Filtered output of shape ``(B, N, C)``, same dtype as input.
+    """
     B, N, C = x_in.shape
 
     dtype = x_in.dtype

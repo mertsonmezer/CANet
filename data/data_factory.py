@@ -17,6 +17,16 @@ data_dict = {
 
 
 def data_provider(config: CANetTrainConfig, flag: str) -> tuple[Dataset, DataLoader]:
+  """Instantiate the appropriate dataset and wrap it in a DataLoader.
+
+  Args:
+    config: Full training configuration (uses ``data_config`` and batch/seq
+      settings).
+    flag: Split to load — ``"train"``, ``"val"``, or ``"test"``.
+
+  Returns:
+    A ``(dataset, dataloader)`` pair ready for Lightning training.
+  """
   Data = data_dict[config.data_config.data_name]
   timeenc = 0 if config.data_config.embed != "timeF" else 1
 

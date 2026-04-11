@@ -72,6 +72,7 @@ class Dataset_ETT_hour(Dataset):
     self.__read_data__()
 
   def __read_data__(self) -> None:
+    """Load CSV, fit StandardScaler on train split, and build data/stamp arrays."""
     self.scaler = StandardScaler()
     df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
 
@@ -189,6 +190,7 @@ class Dataset_ETT_minute(Dataset):
     self.__read_data__()
 
   def __read_data__(self) -> None:
+    """Load CSV, fit StandardScaler on train split, and build data/stamp arrays."""
     self.scaler = StandardScaler()
     df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
 
@@ -313,6 +315,7 @@ class Dataset_Custom(Dataset):
     self.__read_data__()
 
   def __read_data__(self) -> None:
+    """Load CSV, fit StandardScaler on train split, and build data/stamp arrays."""
     self.scaler = StandardScaler()
     df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
 
