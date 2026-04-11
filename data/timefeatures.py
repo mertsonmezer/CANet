@@ -1,3 +1,5 @@
+"""Time feature extraction utilities for temporal encoding."""
+
 # From: gluonts/src/gluonts/time_feature/_base.py
 # Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #

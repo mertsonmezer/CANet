@@ -1,3 +1,5 @@
+"""PyTorch Dataset classes for ETT and custom time-series benchmarks."""
+
 from __future__ import annotations
 
 import os

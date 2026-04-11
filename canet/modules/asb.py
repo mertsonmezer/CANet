@@ -1,3 +1,5 @@
+"""Adaptive Spectral Block for frequency-domain noise reduction."""
+
 import lightning as L
 import torch
 import torch.nn as nn

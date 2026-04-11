@@ -1,3 +1,5 @@
+"""Sequence-to-patch conversion with 50% overlap stride."""
+
 import lightning as L
 from torch import Tensor
 

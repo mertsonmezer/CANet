@@ -1,3 +1,5 @@
+"""Deep Adaptive Input Normalization (DAIN) module."""
+
 from typing import Literal
 
 import lightning as L

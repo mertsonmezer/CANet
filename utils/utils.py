@@ -1,3 +1,5 @@
+"""Shared utility functions for the CANet project."""
+
 import math
 
 

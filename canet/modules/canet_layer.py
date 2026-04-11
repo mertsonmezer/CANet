@@ -1,3 +1,5 @@
+"""Single CANet layer combining patching, normalization, and convolution."""
+
 import lightning as L
 import torch.nn as nn
 from einops import rearrange

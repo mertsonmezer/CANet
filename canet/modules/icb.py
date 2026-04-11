@@ -1,3 +1,5 @@
+"""Interactive Convolutional Block for multi-scale feature learning."""
+
 import lightning as L
 import torch.nn as nn
 from torch import Tensor

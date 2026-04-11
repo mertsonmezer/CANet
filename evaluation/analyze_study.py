@@ -1,3 +1,5 @@
+"""Analysis utilities for Optuna hyperparameter search studies."""
+
 import argparse
 import warnings
 from typing import Tuple

@@ -1,3 +1,5 @@
+"""Positional encoding utilities for patch sequences."""
+
 import math
 from typing import Literal
 

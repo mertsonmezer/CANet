@@ -1,3 +1,5 @@
+"""Neural Style Adaptive Normalization (NSAN) components."""
+
 import lightning as L
 import torch
 import torch.nn as nn

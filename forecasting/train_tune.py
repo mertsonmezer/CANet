@@ -1,3 +1,5 @@
+"""Optuna-based hyperparameter tuning script for CANet."""
+
 import argparse
 import ast
 import json

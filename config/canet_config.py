@@ -1,3 +1,5 @@
+"""Configuration dataclasses for CANet data and training settings."""
+
 from dataclasses import dataclass, field
 from typing import List, Literal
 

@@ -1,3 +1,5 @@
+"""Factory function for constructing dataset and DataLoader pairs."""
+
 from __future__ import annotations
 
 from torch.utils.data import DataLoader, Dataset

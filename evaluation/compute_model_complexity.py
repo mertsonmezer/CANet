@@ -1,3 +1,5 @@
+"""Model complexity and inference-time profiling utilities."""
+
 import argparse
 import time
 

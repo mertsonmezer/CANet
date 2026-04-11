@@ -1,3 +1,5 @@
+"""Stacked Kronecker Product linear layer for efficient rank reduction."""
+
 import math
 
 import lightning as L

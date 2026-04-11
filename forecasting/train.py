@@ -1,3 +1,5 @@
+"""Single-run training script for CANet."""
+
 import argparse
 import datetime
 import os

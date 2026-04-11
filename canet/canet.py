@@ -1,3 +1,5 @@
+"""CANet model and Lightning training wrapper."""
+
 from typing import Any
 
 import lightning as L

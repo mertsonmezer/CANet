@@ -1,3 +1,5 @@
+"""Inference and result visualization for trained CANet models."""
+
 import argparse
 import time
 
