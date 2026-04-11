@@ -20,7 +20,7 @@ class CANetLayer(L.LightningModule):
     config: CANetTrainConfig,
     mlp_ratio: float = 3.0,
     drop_path_ratio: float = 0.0,
-  ):
+  ) -> None:
     super().__init__()
     self.patch_size: int = patch_size
     self.mlp_ratio: float = mlp_ratio
@@ -127,7 +127,7 @@ class CANetLayer(L.LightningModule):
     return out
 
 
-def demo():
+def demo() -> None:
   import torch
 
   # Define dummy config

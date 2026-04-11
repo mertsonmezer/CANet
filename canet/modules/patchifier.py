@@ -3,7 +3,7 @@ from torch import Tensor
 
 
 class Patchifier(L.LightningModule):
-  def __init__(self, sequence_length: int, patch_size: int):
+  def __init__(self, sequence_length: int, patch_size: int) -> None:
     super().__init__()
     self.patch_size: int = patch_size
     self.stride: int = self.patch_size // 2

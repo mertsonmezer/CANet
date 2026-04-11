@@ -4,7 +4,7 @@ from torch import Tensor
 
 
 class InteractiveConvolutionalBlock(L.LightningModule):
-  def __init__(self, in_features: int, hidden_features: int, drop: float = 0.0):
+  def __init__(self, in_features: int, hidden_features: int, drop: float = 0.0) -> None:
     super().__init__()
     self.conv1 = nn.Conv1d(in_features, hidden_features, 1)
     self.conv2 = nn.Conv1d(in_features, hidden_features, 3, 1, padding=1)

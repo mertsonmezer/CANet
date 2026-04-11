@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import lightning as L
 import torch
 import torch.nn as nn
@@ -8,7 +6,7 @@ from torch import Tensor
 
 
 class StyleBlendingGate(L.LightningModule):
-  def __init__(self, embed_dim: int, blend_ratio: float = 0.1, affine: bool = True):
+  def __init__(self, embed_dim: int, blend_ratio: float = 0.1, affine: bool = True) -> None:
     super().__init__()
     self.embed_dim: int = embed_dim
     self.blend_ratio: float = blend_ratio
@@ -26,7 +24,7 @@ class StyleBlendingGate(L.LightningModule):
 
   def forward(
     self, mean_style1: Tensor, std_style1: Tensor, mean_style2: Tensor, std_style2: Tensor
-  ) -> Tuple[Tensor, Tensor]:
+  ) -> tuple[Tensor, Tensor]:
     if self.affine:
       mean_style1 = mean_style1 * self.mean_shift_style1
       mean_style2 = mean_style2 * self.mean_shift_style2
@@ -43,7 +41,7 @@ class StyleBlendingGate(L.LightningModule):
 
 
 class MeanStdProjector(L.LightningModule):
-  def __init__(self, embed_dim: int, dropout_rate: float):
+  def __init__(self, embed_dim: int, dropout_rate: float) -> None:
     super().__init__()
 
     self.embed_dim: int = embed_dim
@@ -54,7 +52,7 @@ class MeanStdProjector(L.LightningModule):
     self.std_proj = nn.Linear(1, self.embed_dim)
     self.std_drop = nn.Dropout(dropout_rate)
 
-  def forward(self, mean: Tensor, std: Tensor) -> Tuple[Tensor, Tensor]:
+  def forward(self, mean: Tensor, std: Tensor) -> tuple[Tensor, Tensor]:
     mean = rearrange(mean, "b l m -> b m l")
     std = rearrange(std, "b l m -> b m l")
 
@@ -74,7 +72,7 @@ class MeanStdProjector(L.LightningModule):
 
 
 class AdaIN(L.LightningModule):
-  def __init__(self):
+  def __init__(self) -> None:
     super().__init__()
     self.eps = 1e-5
 

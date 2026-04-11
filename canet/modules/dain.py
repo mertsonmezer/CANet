@@ -15,7 +15,7 @@ class DAIN(L.LightningModule):
     gate_lr: float = 1e-3,
     scale_lr: float = 1e-5,
     input_dim: int = 144,
-  ):
+  ) -> None:
     super().__init__()
 
     self.mode: Literal["avg", "adaptive_avg", "adaptive_scale", "full", None] = mode
@@ -99,7 +99,7 @@ class DAIN(L.LightningModule):
     return x
 
 
-def demo():
+def demo() -> None:
   mode: str = "full"
   dimension: int = 144
   input: Tensor = torch.randn(10, dimension, 5)

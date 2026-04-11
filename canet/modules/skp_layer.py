@@ -9,7 +9,7 @@ from utils.utils import round_up_sqrt
 
 
 class StackedKroneckerProductLayer(L.LightningModule):
-  def __init__(self, input_dim: int, output_dim: int, scale: float = 0.5, verbose: bool = False):
+  def __init__(self, input_dim: int, output_dim: int, scale: float = 0.5, verbose: bool = False) -> None:
     super().__init__()
 
     if input_dim <= 0 or output_dim <= 0:
@@ -75,7 +75,7 @@ class StackedKroneckerProductLayer(L.LightningModule):
     )
 
 
-def demo():
+def demo() -> None:
   input_dim = 10
   output_dim = 8
   batch_size = 4

@@ -200,7 +200,7 @@ def create_positional_encoding(
   return nn.Parameter(position_encoding, requires_grad=learnable)
 
 
-def demo():
+def demo() -> None:
   positional_encoding: Tensor = create_positional_encoding(
     encoding_type="exp2d", learnable=True, sequence_length=384, embedding_dim=64
   )

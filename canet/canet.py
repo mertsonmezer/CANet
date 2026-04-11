@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import lightning as L
 import torch
@@ -15,11 +15,11 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class CANet(L.LightningModule):
-  def __init__(self, config: CANetTrainConfig):
+  def __init__(self, config: CANetTrainConfig) -> None:
     super().__init__()
     self.config: CANetTrainConfig = config
 
-    drop_path_ratios: List[float] = [x.item() for x in torch.linspace(0, 0.5, self.config.depth)]
+    drop_path_ratios: list[float] = [x.item() for x in torch.linspace(0, 0.5, self.config.depth)]
 
     self.net_layers = nn.ModuleList(
       [
@@ -57,7 +57,7 @@ class CANet(L.LightningModule):
     eps: float = 1e-5
     x = (x - mean) / (std + eps)
 
-    xs_patched: List[Tensor] = []
+    xs_patched: list[Tensor] = []
     for layer in self.net_layers:
       x_patched: Tensor = layer(x, mean, std)
       x_patched = x_patched.reshape(B * M, -1)
@@ -78,7 +78,7 @@ class CANet(L.LightningModule):
 
 
 class TrainedCANet(L.LightningModule):
-  def __init__(self, config: CANetTrainConfig):
+  def __init__(self, config: CANetTrainConfig) -> None:
     super().__init__()
     self.config: CANetTrainConfig = config
     self.model = CANet(self.config)
@@ -89,19 +89,19 @@ class TrainedCANet(L.LightningModule):
 
     self.lr: float = self.config.train_lr
 
-    self.preds: List[Any] = []
-    self.trues: List[Any] = []
+    self.preds: list[Any] = []
+    self.trues: list[Any] = []
 
     self.save_hyperparameters()
 
   def forward(self, x: Tensor) -> Tensor:
     return self.model(x)
 
-  def configure_optimizers(self) -> Dict[str, Any]:
+  def configure_optimizers(self) -> dict[str, Any]:
     optimizer = optim.AdamW(
       self.model.parameters(), lr=self.lr, weight_decay=self.config.weight_decay
     )
-    scheduler: Dict[str, Any] = {
+    scheduler: dict[str, Any] = {
       "scheduler": ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=2),
       "monitor": "val_mse",
       "interval": "epoch",
@@ -109,7 +109,7 @@ class TrainedCANet(L.LightningModule):
     }
     return {"optimizer": optimizer, "lr_scheduler": scheduler}
 
-  def _calculate_loss(self, batch: Tensor, mode: str = "train") -> Tuple[Tensor, Tensor, Tensor]:
+  def _calculate_loss(self, batch: Tensor, mode: str = "train") -> tuple[Tensor, Tensor, Tensor]:
     batch_x, batch_y, _, _ = batch
     batch_x: Tensor = batch_x.float().to(DEVICE)
     batch_y: Tensor = batch_y.float().to(DEVICE)
@@ -145,7 +145,7 @@ class TrainedCANet(L.LightningModule):
   def validation_step(self, batch: Tensor, batch_idx: int) -> None:
     self._calculate_loss(batch, mode="val")
 
-  def test_step(self, batch: Tensor, batch_idx: int) -> Dict[str, Tensor]:
+  def test_step(self, batch: Tensor, batch_idx: int) -> dict[str, Tensor]:
     loss, pred, true = self._calculate_loss(batch, mode="test")
     self.preds.append(pred)
     self.trues.append(true)
@@ -166,7 +166,7 @@ class TrainedCANet(L.LightningModule):
     print(f"{mae, mse}")
 
 
-def demo():
+def demo() -> None:
   # Create a dummy configuration
   config = CANetTrainConfig(
     batch_size=128,
