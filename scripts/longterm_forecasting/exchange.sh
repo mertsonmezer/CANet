@@ -15,7 +15,7 @@ do
     --num_trials 100 \
     --num_epochs 20 \
     --batch_sizes 16 32 64 128 256 \
-    --seq_len $seq_len \
+    --seq_len 96 \
     --pred_len $pred_len \
     --low_lr 0.0001 \
     --high_lr 0.01 \
