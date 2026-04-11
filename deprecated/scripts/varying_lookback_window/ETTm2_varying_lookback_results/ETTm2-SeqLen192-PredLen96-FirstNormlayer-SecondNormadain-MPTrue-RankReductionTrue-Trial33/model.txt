@@ -1,0 +1,40 @@
+Total Number of Parameters: 2189870
+
+Training Configuration:
+{
+  "data_config": {
+    "data_name": "ETTm2",
+    "root_dir_path": "ETT-small/",
+    "data_path": "ETTm2.csv",
+    "embed": "timeF",
+    "features": "M",
+    "target": "OT",
+    "freq": "h",
+    "seasonal_patterns": "",
+    "num_channels": 7
+  },
+  "num_epochs": 20,
+  "batch_size": 1024,
+  "patch_size": 16,
+  "patch_sizes": [
+    16,
+    64
+  ],
+  "embed_dim": 128,
+  "depth": 2,
+  "output_features": 1024,
+  "seq_len": 192,
+  "label_len": 0,
+  "pred_len": 96,
+  "seed": 56,
+  "train_lr": 0.0006344033264649034,
+  "weight_decay": 1e-06,
+  "dropout_rate": 0.4632575933289519,
+  "accumulate_grad_batches": 1,
+  "first_norm_layer": "layer",
+  "second_norm_layer": "adain",
+  "blend_ratio": 0.1,
+  "style_blend_gate_affine": true,
+  "use_multi_patching": true,
+  "use_rank_reduction": true
+}

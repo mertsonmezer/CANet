@@ -1,0 +1,40 @@
+Total Number of Parameters: 1191234
+
+Training Configuration:
+{
+  "data_config": {
+    "data_name": "custom",
+    "root_dir_path": "Weather/",
+    "data_path": "weather.csv",
+    "embed": "timeF",
+    "features": "M",
+    "target": "OT",
+    "freq": "h",
+    "seasonal_patterns": "",
+    "num_channels": 21
+  },
+  "num_epochs": 20,
+  "batch_size": 64,
+  "patch_size": 16,
+  "patch_sizes": [
+    4,
+    16
+  ],
+  "embed_dim": 128,
+  "depth": 2,
+  "output_features": 1024,
+  "seq_len": 24,
+  "label_len": 0,
+  "pred_len": 96,
+  "seed": 56,
+  "train_lr": 0.0001409825988566834,
+  "weight_decay": 1e-06,
+  "dropout_rate": 0.3408560788328677,
+  "accumulate_grad_batches": 1,
+  "first_norm_layer": "layer",
+  "second_norm_layer": "adain",
+  "blend_ratio": 0.1,
+  "style_blend_gate_affine": true,
+  "use_multi_patching": true,
+  "use_rank_reduction": true
+}
