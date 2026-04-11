@@ -46,7 +46,12 @@ class StackedKroneckerProductLayer(L.LightningModule):
     # Construct the full weight matrix and truncate to (input_dim, output_dim)
     full_weight: Tensor = (
       torch.matmul(self.factor_A, self.factor_B)
-      .reshape(self.rounded_input_dim, self.rounded_output_dim, self.rounded_input_dim, self.rounded_output_dim)
+      .reshape(
+        self.rounded_input_dim,
+        self.rounded_output_dim,
+        self.rounded_input_dim,
+        self.rounded_output_dim,
+      )
       .transpose(1, 2)
       .reshape(self.extended_input_dim, self.extended_output_dim)
     )
@@ -55,14 +60,16 @@ class StackedKroneckerProductLayer(L.LightningModule):
     return torch.matmul(x, truncated_weight)
 
   def _print_layer_info(self) -> None:
-    """
-    Logs the configuration and rank reduction of the layer.
-    """
-    reduction_percentage: float = (2 * self.reduced_rank * self.kron_dim) * 100.0 / (self.input_dim * self.output_dim)
+    """Logs the configuration and rank reduction of the layer."""
+    reduction_percentage: float = (
+      (2 * self.reduced_rank * self.kron_dim) * 100.0 / (self.input_dim * self.output_dim)
+    )
     print(
-      f"Using StackedKroneckerProductLayer: input_dim={self.input_dim}, output_dim={self.output_dim}, "
+      f"Using StackedKroneckerProductLayer: input_dim={self.input_dim}, "
+      f"output_dim={self.output_dim}, "
       f"reduced_rank={self.reduced_rank}, rounded_input_dim={self.rounded_input_dim}, "
-      f"rounded_output_dim={self.rounded_output_dim}, extended_input_dim={self.extended_input_dim}, "
+      f"rounded_output_dim={self.rounded_output_dim}, "
+      f"extended_input_dim={self.extended_input_dim}, "
       f"extended_output_dim={self.extended_output_dim}, kron_dim={self.kron_dim}, "
       f"reduction={reduction_percentage:.2f}%"
     )

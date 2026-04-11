@@ -14,7 +14,13 @@ from config.canet_config import CANetTrainConfig
 
 
 class CANetLayer(L.LightningModule):
-  def __init__(self, patch_size: int, config: CANetTrainConfig, mlp_ratio: float = 3.0, drop_path_ratio: float = 0.0):
+  def __init__(
+    self,
+    patch_size: int,
+    config: CANetTrainConfig,
+    mlp_ratio: float = 3.0,
+    drop_path_ratio: float = 0.0,
+  ):
     super().__init__()
     self.patch_size: int = patch_size
     self.mlp_ratio: float = mlp_ratio
@@ -141,7 +147,9 @@ def demo():
   canet_layer = CANetLayer(patch_size, config)
 
   # Generate dummy inputs
-  input: Tensor = torch.randn(config.batch_size, config.seq_len, config.data_config.num_channels)  # Input sequence
+  input: Tensor = torch.randn(
+    config.batch_size, config.seq_len, config.data_config.num_channels
+  )  # Input sequence
   mean: Tensor = input.mean(dim=1, keepdim=True)  # Mean tensor
   std: Tensor = input.std(dim=1, keepdim=True)  # Std tensor
 

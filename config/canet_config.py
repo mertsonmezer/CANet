@@ -64,4 +64,6 @@ class CANetTrainConfig:
     Validates training configuration constraints after initialization.
     """
     if len(self.patch_sizes) != self.depth:
-      raise ValueError(f"Length of patch_sizes ({len(self.patch_sizes)}) must match depth ({self.depth}).")
+      raise ValueError(
+        f"Length of patch_sizes ({len(self.patch_sizes)}) must match depth ({self.depth})."
+      )

@@ -22,9 +22,7 @@ def Coord2dPosEncoding(q_len, d_model, exponential=False, normalize=True, eps=1e
   x = 0.5 if exponential else 1
   i = 0
   for i in range(100):
-    cpe = (
-      2 * (torch.linspace(0, 1, q_len).reshape(-1, 1) ** x) * (torch.linspace(0, 1, d_model).reshape(1, -1) ** x) - 1
-    )
+    cpe = 2 * (torch.linspace(0, 1, q_len).reshape(-1, 1) ** x) * (torch.linspace(0, 1, d_model).reshape(1, -1) ** x) - 1
     # pv(f"{i:4.0f}  {x:5.3f}  {cpe.mean():+6.3f}", verbose)
     if abs(cpe.mean()) <= eps:
       break
@@ -76,8 +74,10 @@ def positional_encoding(pe, learn_pe, q_len, d_model):
   elif pe == "sincos":
     W_pos = PositionalEncoding(q_len, d_model, normalize=True)
   else:
-    raise ValueError(f"{pe} is not a valid pe (positional encoder. Available types: 'gauss'=='normal', \
-        'zeros', 'zero', uniform', 'lin1d', 'exp1d', 'lin2d', 'exp2d', 'sincos', None.)")
+    raise ValueError(
+      f"{pe} is not a valid pe (positional encoder. Available types: 'gauss'=='normal', \
+        'zeros', 'zero', uniform', 'lin1d', 'exp1d', 'lin2d', 'exp2d', 'sincos', None.)"
+    )
   return nn.Parameter(W_pos, requires_grad=learn_pe)
 
 

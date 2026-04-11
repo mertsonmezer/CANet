@@ -223,9 +223,7 @@ def convert_tsf_to_dataframe(
             series = series.split(",")
 
             if len(series) == 0:
-              raise Exception(
-                "A given series should contains a set of comma separated numeric values. At least one numeric value should be there in a series. Missing values should be indicated with ? symbol"
-              )
+              raise Exception("A given series should contains a set of comma separated numeric values. At least one numeric value should be there in a series. Missing values should be indicated with ? symbol")
 
             numeric_series = []
 
@@ -236,9 +234,7 @@ def convert_tsf_to_dataframe(
                 numeric_series.append(float(val))
 
             if numeric_series.count(replace_missing_vals_with) == len(numeric_series):
-              raise Exception(
-                "All series values are missing. A given series should contains a set of comma separated numeric values. At least one numeric value should be there in a series."
-              )
+              raise Exception("All series values are missing. A given series should contains a set of comma separated numeric values. At least one numeric value should be there in a series.")
 
             all_series.append(pd.Series(numeric_series).array)
 
@@ -251,9 +247,7 @@ def convert_tsf_to_dataframe(
               elif col_types[i] == "date":
                 att_val = datetime.strptime(full_info[i], "%Y-%m-%d %H-%M-%S")
               else:
-                raise Exception(
-                  "Invalid attribute type."
-                )  # Currently, the code supports only numeric, string and date types. Extend this as required.
+                raise Exception("Invalid attribute type.")  # Currently, the code supports only numeric, string and date types. Extend this as required.
 
               if att_val is None:
                 raise Exception("Invalid attribute value.")

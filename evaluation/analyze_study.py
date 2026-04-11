@@ -25,7 +25,9 @@ def get_filtered_trials(study: optuna.study.Study) -> NDArray[np.float64]:
   Raises:
     ValueError: If there are no completed trials in the study.
   """
-  completed_trials: list[float] = [trial.value for trial in study.get_trials() if trial.value is not None]
+  completed_trials: list[float] = [
+    trial.value for trial in study.get_trials() if trial.value is not None
+  ]
   if not completed_trials:
     raise ValueError("No completed trials found in the study.")
 
@@ -54,19 +56,27 @@ def calculate_confidence_interval(
   mean: np.float64 = np.mean(filtered_trials)
   std_dev: np.float64 = np.std(filtered_trials)
   degrees_freedom: int = len(filtered_trials) - 1
-  return stats.t.interval(confidence_level, degrees_freedom, mean, std_dev / np.sqrt(len(filtered_trials)))
+  return stats.t.interval(
+    confidence_level, degrees_freedom, mean, std_dev / np.sqrt(len(filtered_trials))
+  )
 
 
 def main():
   parser = argparse.ArgumentParser(description="Analyze Optuna study results.")
   parser.add_argument("--study_name", type=str, required=True, help="Name of the Optuna study")
-  parser.add_argument("--storage_folder", type=str, default="results", help="Folder where the study DB is stored")
-  parser.add_argument("--show_plot", action="store_true", help="Flag to control whether to display the plot")
+  parser.add_argument(
+    "--storage_folder", type=str, default="results", help="Folder where the study DB is stored"
+  )
+  parser.add_argument(
+    "--show_plot", action="store_true", help="Flag to control whether to display the plot"
+  )
   args: argparse.Namespace = parser.parse_args()
 
   # Load the study
   storage: str = f"sqlite:///{args.storage_folder}/{args.study_name}.db"
-  study: optuna.Study = optuna.create_study(study_name=args.study_name, storage=storage, load_if_exists=True)
+  study: optuna.Study = optuna.create_study(
+    study_name=args.study_name, storage=storage, load_if_exists=True
+  )
 
   # Display the best trial
   best_trial: FrozenTrial = study.best_trial
@@ -82,7 +92,9 @@ def main():
 
   # Filter trials and calculate confidence interval
   filtered_trials: NDArray[np.float64] = get_filtered_trials(study)
-  confidence_interval: Tuple[np.float64, np.float64] = calculate_confidence_interval(filtered_trials)
+  confidence_interval: Tuple[np.float64, np.float64] = calculate_confidence_interval(
+    filtered_trials
+  )
 
   # Print results
   print(f"Mean of the filtered objective values: {np.mean(filtered_trials)}")

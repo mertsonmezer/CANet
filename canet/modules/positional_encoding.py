@@ -6,7 +6,9 @@ import torch.nn as nn
 from torch import Tensor
 
 
-def sin_cos_positional_encoding(sequence_length: int, embedding_dim: int, normalize: bool = False) -> torch.Tensor:
+def sin_cos_positional_encoding(
+  sequence_length: int, embedding_dim: int, normalize: bool = False
+) -> torch.Tensor:
   """
   Generates a sinusoidal positional encoding matrix.
 
@@ -22,7 +24,9 @@ def sin_cos_positional_encoding(sequence_length: int, embedding_dim: int, normal
   positions: Tensor = torch.arange(sequence_length).unsqueeze(1)  # Position indices
 
   # Compute the scaling term for sine and cosine functions
-  frequency_scaling: Tensor = torch.exp(torch.arange(0, embedding_dim, 2) * -(math.log(10000.0) / embedding_dim))
+  frequency_scaling: Tensor = torch.exp(
+    torch.arange(0, embedding_dim, 2) * -(math.log(10000.0) / embedding_dim)
+  )
 
   # Apply sine to even indices and cosine to odd indices
   encoding[:, 0::2] = torch.sin(positions * frequency_scaling)
@@ -51,10 +55,14 @@ def coordinate_1d_positional_encoding(
   scaling_factor: float = 0.5 if use_exponential else 1.0
 
   # Compute the 1D positional encoding
-  coordinate_encoding: Tensor = 2 * (torch.linspace(0, 1, sequence_length).reshape(-1, 1) ** scaling_factor) - 1
+  coordinate_encoding: Tensor = (
+    2 * (torch.linspace(0, 1, sequence_length).reshape(-1, 1) ** scaling_factor) - 1
+  )
 
   if normalize:
-    coordinate_encoding = (coordinate_encoding - coordinate_encoding.mean()) / (coordinate_encoding.std() * 10)
+    coordinate_encoding = (coordinate_encoding - coordinate_encoding.mean()) / (
+      coordinate_encoding.std() * 10
+    )
 
   return coordinate_encoding
 
@@ -99,14 +107,26 @@ def coordinate_2d_positional_encoding(
       scaling_factor -= 0.001
 
   if normalize:
-    coordinate_encoding = (coordinate_encoding - coordinate_encoding.mean()) / (coordinate_encoding.std() * 10)
+    coordinate_encoding = (coordinate_encoding - coordinate_encoding.mean()) / (
+      coordinate_encoding.std() * 10
+    )
 
   return coordinate_encoding
 
 
 def create_positional_encoding(
   encoding_type: Literal[
-    "zero", "zeros", "normal", "gauss", "uniform", "lin1d", "exp1d", "lin2d", "exp2d", "sincos", None
+    "zero",
+    "zeros",
+    "normal",
+    "gauss",
+    "uniform",
+    "lin1d",
+    "exp1d",
+    "lin2d",
+    "exp2d",
+    "sincos",
+    None,
   ],
   learnable: bool,
   sequence_length: int,
@@ -148,10 +168,14 @@ def create_positional_encoding(
     nn.init.uniform_(position_encoding, a=0.0, b=0.1)
 
   elif encoding_type == "lin1d":
-    position_encoding = coordinate_1d_positional_encoding(sequence_length, use_exponential=False, normalize=True)
+    position_encoding = coordinate_1d_positional_encoding(
+      sequence_length, use_exponential=False, normalize=True
+    )
 
   elif encoding_type == "exp1d":
-    position_encoding = coordinate_1d_positional_encoding(sequence_length, use_exponential=True, normalize=True)
+    position_encoding = coordinate_1d_positional_encoding(
+      sequence_length, use_exponential=True, normalize=True
+    )
 
   elif encoding_type == "lin2d":
     position_encoding = coordinate_2d_positional_encoding(

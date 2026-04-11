@@ -39,7 +39,9 @@ def data_provider(config: CANetTrainConfig, flag: str):
       freq=freq,
     )
     print(flag, len(data_set))
-    data_loader = DataLoader(data_set, batch_size=batch_size, shuffle=shuffle_flag, drop_last=drop_last)
+    data_loader = DataLoader(
+      data_set, batch_size=batch_size, shuffle=shuffle_flag, drop_last=drop_last
+    )
   else:
     data_set = Data(
       root_path=config.data_config.root_dir_path,
@@ -53,6 +55,8 @@ def data_provider(config: CANetTrainConfig, flag: str):
       seasonal_patterns=config.data_config.seasonal_patterns,
     )
     print(flag, len(data_set))
-    data_loader = DataLoader(data_set, batch_size=batch_size, shuffle=shuffle_flag, drop_last=drop_last)
+    data_loader = DataLoader(
+      data_set, batch_size=batch_size, shuffle=shuffle_flag, drop_last=drop_last
+    )
 
   return data_set, data_loader

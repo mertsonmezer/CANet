@@ -62,9 +62,7 @@ def random_masking_3D(xb, mask_ratio):
   x_ = torch.cat([x_kept, x_removed], dim=1)  # x_: [bs x L x dim]
 
   # combine the kept part and the removed one
-  x_masked = torch.gather(
-    x_, dim=1, index=ids_restore.unsqueeze(-1).repeat(1, 1, D)
-  )  # x_masked: [bs x num_patch x dim]
+  x_masked = torch.gather(x_, dim=1, index=ids_restore.unsqueeze(-1).repeat(1, 1, D))  # x_masked: [bs x num_patch x dim]
 
   # generate the binary mask: 0 is keep, 1 is remove
   mask = torch.ones([bs, L], device=x.device)  # mask: [bs x num_patch]
