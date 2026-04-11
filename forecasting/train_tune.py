@@ -142,7 +142,7 @@ def objective(
   """
   # Suggest values for hyperparameters based on predefined ranges
   config.batch_size = trial.suggest_categorical("batch_size", args.batch_sizes)
-  config.train_lr = trial.suggest_loguniform("train_lr", args.low_lr, args.high_lr)
+  config.train_lr = trial.suggest_float("train_lr", args.low_lr, args.high_lr, log=True)
   config.dropout_rate = trial.suggest_float("dropout_rate", args.low_dropout, args.high_dropout)
   config.patch_sizes = trial.suggest_categorical("patch_sizes", args.patch_sizes)
   config.embed_dim = trial.suggest_categorical("embed_dim", args.embed_dims)
