@@ -2,21 +2,23 @@ import matplotlib
 
 matplotlib.use("TkAgg")
 
-import torch
-import time
-import numpy as np
-import matplotlib.pyplot as plt
-import torch.nn.functional as F
-import lightning as L
-from lightning.pytorch.utilities.model_summary import ModelSummary
-from models.net import TrainedNet
-from data.data_factory import data_provider
-import os
-import optuna
-import glob
-from datetime import datetime
 import argparse
+import glob
+import os
+import time
+from datetime import datetime
+
+import lightning as L
+import matplotlib.pyplot as plt
+import numpy as np
+import optuna
+import torch
+import torch.nn.functional as F
+from lightning.pytorch.utilities.model_summary import ModelSummary
 from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
+
+from data.data_factory import data_provider
+from models.net import TrainedNet
 
 
 # Set up command-line arguments
@@ -41,9 +43,7 @@ def get_best_model_path(data: str, seq_len: int, pred_len: int, normalization: s
   best_trial = study.best_trial
   best_trial_id = best_trial._trial_id
 
-  model_folder_path_prefix: str = (
-    f"logs/{data}_{str(seq_len)}_{str(pred_len)}_trial{str(best_trial_id - 1)}_norm{str(normalization)}_mp{str(mrp)}"
-  )
+  model_folder_path_prefix: str = f"logs/{data}_{str(seq_len)}_{str(pred_len)}_trial{str(best_trial_id - 1)}_norm{str(normalization)}_mp{str(mrp)}"
 
   matching_folders = glob.glob(f"{model_folder_path_prefix}*")
 
@@ -75,7 +75,7 @@ def get_best_model_path(data: str, seq_len: int, pred_len: int, normalization: s
 # Function to load the best model
 def get_best_model(data: str, seq_len: int, pred_len: int, normalization: str, mrp: bool) -> TrainedNet:
   best_model_path: str = get_best_model_path(data, seq_len, pred_len, normalization, mrp)
-  best_model: TrainedNet = TrainedNet.load_from_checkpoint(best_model_path)
+  best_model: TrainedNet = TrainedNet.load_from_checkpoint(best_model_path, weights_only=False)
   return best_model
 
 

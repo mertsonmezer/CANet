@@ -1,7 +1,7 @@
 import argparse
-import shutil
-import os
 import json
+import os
+import shutil
 from dataclasses import asdict
 from functools import partial
 from typing import Dict, List
@@ -11,8 +11,8 @@ import optuna
 import pandas as pd
 import torch
 from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, TQDMProgressBar
-from optuna.trial._frozen import FrozenTrial
 from optuna.samplers import TPESampler
+from optuna.trial._frozen import FrozenTrial
 from torch.utils.data import DataLoader
 
 from config.net_config import DataConfig, TrainConfig
@@ -29,6 +29,7 @@ LOW_DROPOUT, HIGH_DROPOUT = 0.3, 0.5
 BATCH_SIZES: List[int] = [16]
 PATCH_SIZES: List[List[int]] = [[8, 48]]
 EMBED_DIMS: List[int] = [64]
+
 
 def clean_trial_logs(study: optuna.Study, config: TrainConfig, logs_dir: str):
   best_trial_number: int = study.best_trial.number
@@ -74,7 +75,7 @@ def train_model(
   trainer.fit(model, train_dataloader, val_dataloader)
 
   # Load the best checkpoint after training
-  model: TrainedNet = TrainedNet.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+  model: TrainedNet = TrainedNet.load_from_checkpoint(trainer.checkpoint_callback.best_model_path, weights_only=False)
 
   # Test the model on validation and test datasets
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)

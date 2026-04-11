@@ -33,23 +33,23 @@ Compared to state-of-the-art methods, CANet consistently delivers more accurate 
 
 ## 🛠️ Setup
 
-**1. Install Python**
-Ensure you have Python 3.10 installed on your system.
+**1. Install uv**
+If you don't have [uv](https://docs.astral.sh/uv/) installed, follow the [official installation instructions](https://docs.astral.sh/uv/getting-started/installation/).
 
-**2. Install Dependencies**
-You can install the required dependencies using pip or Conda.
-
-**Option 1: Using pip**
-Run the following command:
+**2. Clone the repository**
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/mertsonmezer/CANet.git
+cd CANet
 ```
 
-**Option 2: Using Conda**
-First, create a new Conda environment and then install the dependencies:
+**3. Install dependencies**
 ```bash
-conda env create --name canet --file=environment.yml
-pip install -r requirements.txt
+uv sync
+```
+
+This creates a virtual environment and installs all required dependencies automatically. To activate it:
+```bash
+source .venv/bin/activate
 ```
 
 ## 📊 Datasets

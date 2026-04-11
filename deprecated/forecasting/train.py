@@ -49,7 +49,7 @@ def train_model(
   trainer.fit(model, train_dataloader, val_dataloader)
 
   # Load the best checkpoint after training
-  model: TrainedNet = TrainedNet.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
+  model: TrainedNet = TrainedNet.load_from_checkpoint(trainer.checkpoint_callback.best_model_path, weights_only=False)
 
   # Test the model on validation and test datasets
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)
