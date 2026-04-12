@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import warnings
+from typing import ClassVar
 
 import numpy as np
 import pandas as pd
@@ -19,23 +20,26 @@ _DEFAULT_LABEL_LEN: int = 24 * 4
 _ETT_HOUR_TRAIN_BORDER: int = 12 * 30 * 24
 
 
-class Dataset_ETT_hour(Dataset):
-  """Hourly ETT (Electricity Transformer Temperature) dataset.
+class _BaseETTDataset(Dataset):
+  """Shared base for hourly and minute-resolution ETT datasets.
 
-  Applies a fixed 12/4/4 month train/val/test split. Supports multivariate
-  (M), univariate (S), and multivariate-with-single-target (MS) feature modes.
+  Subclasses set ``_TIMESTEP_MULTIPLIER`` to scale the border indices and
+  override ``_add_minute_feature`` to control whether a discretized minute
+  column is added to the time stamp.
 
   Args:
     root_path: Directory containing the CSV file.
     flag: Split to load — ``"train"``, ``"val"``, or ``"test"``.
     size: ``[seq_len, label_len, pred_len]``; defaults to ``[384, 96, 96]``.
     features: Feature mode — ``"M"``, ``"S"``, or ``"MS"``.
-    data_path: CSV file name; default ``"ETTh1.csv"``.
+    data_path: CSV file name.
     target: Target column name; default ``"OT"``.
     scale: If True, applies StandardScaler fitted on the training split.
     timeenc: 0 for manual time encoding, 1 for Fourier time features.
-    freq: Frequency string used for Fourier encoding; default ``"h"``.
+    freq: Frequency string used for Fourier encoding.
   """
+
+  _TIMESTEP_MULTIPLIER: ClassVar[int] = 1
 
   def __init__(
     self,
@@ -75,21 +79,27 @@ class Dataset_ETT_hour(Dataset):
 
     self.__read_data__()
 
+  def _add_minute_feature(self, df_stamp: pd.DataFrame) -> None:
+    """Optionally add a discretized minute column to the time-stamp frame.
+
+    The base (hourly) implementation is a no-op. The minute subclass
+    overrides this to append a ``minute // 15`` column.
+
+    Args:
+      df_stamp: DataFrame with date-derived columns to extend in-place.
+    """
+
   def __read_data__(self) -> None:
     """Load CSV, fit StandardScaler on train split, and build data/stamp arrays."""
     self.scaler = StandardScaler()
     df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
 
-    border1s = [
-      0,
-      _ETT_HOUR_TRAIN_BORDER - self.seq_len,
-      _ETT_HOUR_TRAIN_BORDER + 4 * 30 * 24 - self.seq_len,
-    ]
-    border2s = [
-      _ETT_HOUR_TRAIN_BORDER,
-      _ETT_HOUR_TRAIN_BORDER + 4 * 30 * 24,
-      _ETT_HOUR_TRAIN_BORDER + 8 * 30 * 24,
-    ]
+    train_border: int = _ETT_HOUR_TRAIN_BORDER * self._TIMESTEP_MULTIPLIER
+    val_span: int = 4 * 30 * 24 * self._TIMESTEP_MULTIPLIER
+    test_span: int = 8 * 30 * 24 * self._TIMESTEP_MULTIPLIER
+
+    border1s = [0, train_border - self.seq_len, train_border + val_span - self.seq_len]
+    border2s = [train_border, train_border + val_span, train_border + test_span]
     border1 = border1s[self.set_type]
     border2 = border2s[self.set_type]
 
@@ -113,6 +123,7 @@ class Dataset_ETT_hour(Dataset):
       df_stamp["day"] = df_stamp.date.apply(lambda row: row.day, axis=1)
       df_stamp["weekday"] = df_stamp.date.apply(lambda row: row.weekday(), axis=1)
       df_stamp["hour"] = df_stamp.date.apply(lambda row: row.hour, axis=1)
+      self._add_minute_feature(df_stamp)
       data_stamp = df_stamp.drop(["date"], axis=1).values
     elif self.timeenc == 1:
       data_stamp = time_features(pd.to_datetime(df_stamp["date"].values), freq=self.freq)
@@ -135,8 +146,6 @@ class Dataset_ETT_hour(Dataset):
     seq_x_mark = self.data_stamp[s_begin:s_end]
     seq_y_mark = self.data_stamp[r_begin:r_end]
 
-    # seq_x = zero_pad_sequence(torch.from_numpy(seq_x).permute(1,0), self.pad_len).permute(1,0)
-
     return seq_x, seq_y, seq_x_mark, seq_y_mark
 
   def __len__(self) -> int:
@@ -146,7 +155,52 @@ class Dataset_ETT_hour(Dataset):
     return self.scaler.inverse_transform(data)
 
 
-class Dataset_ETT_minute(Dataset):
+class Dataset_ETT_hour(_BaseETTDataset):
+  """Hourly ETT (Electricity Transformer Temperature) dataset.
+
+  Applies a fixed 12/4/4 month train/val/test split. Supports multivariate
+  (M), univariate (S), and multivariate-with-single-target (MS) feature modes.
+
+  Args:
+    root_path: Directory containing the CSV file.
+    flag: Split to load — ``"train"``, ``"val"``, or ``"test"``.
+    size: ``[seq_len, label_len, pred_len]``; defaults to ``[384, 96, 96]``.
+    features: Feature mode — ``"M"``, ``"S"``, or ``"MS"``.
+    data_path: CSV file name; default ``"ETTh1.csv"``.
+    target: Target column name; default ``"OT"``.
+    scale: If True, applies StandardScaler fitted on the training split.
+    timeenc: 0 for manual time encoding, 1 for Fourier time features.
+    freq: Frequency string used for Fourier encoding; default ``"h"``.
+  """
+
+  _TIMESTEP_MULTIPLIER: ClassVar[int] = 1
+
+  def __init__(
+    self,
+    root_path: str,
+    flag: str = "train",
+    size: list[int] | None = None,
+    features: str = "S",
+    data_path: str = "ETTh1.csv",
+    target: str = "OT",
+    scale: bool = True,
+    timeenc: int = 0,
+    freq: str = "h",
+  ) -> None:
+    super().__init__(
+      root_path=root_path,
+      flag=flag,
+      size=size,
+      features=features,
+      data_path=data_path,
+      target=target,
+      scale=scale,
+      timeenc=timeenc,
+      freq=freq,
+    )
+
+
+class Dataset_ETT_minute(_BaseETTDataset):
   """Minute-resolution ETT dataset (15-minute intervals).
 
   Identical to ``Dataset_ETT_hour`` but uses a 4× timestep multiplier for
@@ -164,6 +218,8 @@ class Dataset_ETT_minute(Dataset):
     freq: Frequency string used for Fourier encoding; default ``"t"``.
   """
 
+  _TIMESTEP_MULTIPLIER: ClassVar[int] = 4
+
   def __init__(
     self,
     root_path: str,
@@ -176,101 +232,26 @@ class Dataset_ETT_minute(Dataset):
     timeenc: int = 0,
     freq: str = "t",
   ) -> None:
-    # size [seq_len, label_len, pred_len]
-    # info
-    if size is None:
-      self.seq_len = _DEFAULT_SEQ_LEN
-      self.label_len = _DEFAULT_LABEL_LEN
-      self.pred_len = _DEFAULT_LABEL_LEN
-    else:
-      self.seq_len = size[0]
-      self.label_len = size[1]
-      self.pred_len = size[2]
-    # init
-    assert flag in ["train", "test", "val"]
-    type_map = {"train": 0, "val": 1, "test": 2}
-    self.set_type = type_map[flag]
+    super().__init__(
+      root_path=root_path,
+      flag=flag,
+      size=size,
+      features=features,
+      data_path=data_path,
+      target=target,
+      scale=scale,
+      timeenc=timeenc,
+      freq=freq,
+    )
 
-    self.features = features
-    self.target = target
-    self.scale = scale
-    self.timeenc = timeenc
-    self.freq = freq
+  def _add_minute_feature(self, df_stamp: pd.DataFrame) -> None:
+    """Append a ``minute // 15`` column to the time-stamp frame.
 
-    self.root_path = root_path
-    self.data_path = data_path
-    self.__read_data__()
-
-  def __read_data__(self) -> None:
-    """Load CSV, fit StandardScaler on train split, and build data/stamp arrays."""
-    self.scaler = StandardScaler()
-    df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
-
-    _ett_min_border: int = _ETT_HOUR_TRAIN_BORDER * 4
-    border1s = [
-      0,
-      _ett_min_border - self.seq_len,
-      _ett_min_border + 4 * 30 * 24 * 4 - self.seq_len,
-    ]
-    border2s = [
-      _ett_min_border,
-      _ett_min_border + 4 * 30 * 24 * 4,
-      _ett_min_border + 8 * 30 * 24 * 4,
-    ]
-    border1 = border1s[self.set_type]
-    border2 = border2s[self.set_type]
-
-    if self.features == "M" or self.features == "MS":
-      cols_data = df_raw.columns[1:]
-      df_data = df_raw[cols_data]
-    elif self.features == "S":
-      df_data = df_raw[[self.target]]
-
-    if self.scale:
-      train_data = df_data[border1s[0] : border2s[0]]
-      self.scaler.fit(train_data.values)
-      data = self.scaler.transform(df_data.values)
-    else:
-      data = df_data.values
-
-    df_stamp = df_raw[["date"]][border1:border2]
-    df_stamp["date"] = pd.to_datetime(df_stamp.date)
-    if self.timeenc == 0:
-      df_stamp["month"] = df_stamp.date.apply(lambda row: row.month, axis=1)
-      df_stamp["day"] = df_stamp.date.apply(lambda row: row.day, axis=1)
-      df_stamp["weekday"] = df_stamp.date.apply(lambda row: row.weekday(), axis=1)
-      df_stamp["hour"] = df_stamp.date.apply(lambda row: row.hour, axis=1)
-      df_stamp["minute"] = df_stamp.date.apply(lambda row: row.minute, axis=1)
-      df_stamp["minute"] = df_stamp.minute.map(lambda x: x // 15)
-      data_stamp = df_stamp.drop(["date"], axis=1).values
-    elif self.timeenc == 1:
-      data_stamp = time_features(pd.to_datetime(df_stamp["date"].values), freq=self.freq)
-      data_stamp = data_stamp.transpose(1, 0)
-
-    self.data_x = data[border1:border2]
-    self.data_y = data[border1:border2]
-    self.data_stamp = data_stamp
-
-  def __getitem__(
-    self, index: int
-  ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    s_begin = index
-    s_end = s_begin + self.seq_len
-    r_begin = s_end - self.label_len
-    r_end = r_begin + self.label_len + self.pred_len
-
-    seq_x = self.data_x[s_begin:s_end]
-    seq_y = self.data_y[r_begin:r_end]
-    seq_x_mark = self.data_stamp[s_begin:s_end]
-    seq_y_mark = self.data_stamp[r_begin:r_end]
-
-    return seq_x, seq_y, seq_x_mark, seq_y_mark
-
-  def __len__(self) -> int:
-    return len(self.data_x) - self.seq_len - self.pred_len + 1
-
-  def inverse_transform(self, data: np.ndarray) -> np.ndarray:
-    return self.scaler.inverse_transform(data)
+    Args:
+      df_stamp: DataFrame with date-derived columns to extend in-place.
+    """
+    df_stamp["minute"] = df_stamp.date.apply(lambda row: row.minute, axis=1)
+    df_stamp["minute"] = df_stamp.minute.map(lambda x: x // 15)
 
 
 class Dataset_Custom(Dataset):
@@ -332,9 +313,6 @@ class Dataset_Custom(Dataset):
     self.scaler = StandardScaler()
     df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
 
-    """
-        df_raw.columns: ['date', ...(other features), target feature]
-        """
     cols = list(df_raw.columns)
     cols.remove(self.target)
     cols.remove("date")
