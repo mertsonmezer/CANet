@@ -66,17 +66,45 @@ def calculate_confidence_interval(
 def main() -> None:
   """Entry point — parse arguments and run the main workflow."""
   parser = argparse.ArgumentParser(description="Analyze Optuna study results.")
-  parser.add_argument("--study_name", type=str, required=True, help="Name of the Optuna study")
+  parser.add_argument("--study_name", type=str, required=True, help="Name of the Optuna study.")
   parser.add_argument(
-    "--storage_folder", type=str, default="results", help="Folder where the study DB is stored"
+    "--dataset",
+    type=str,
+    default=None,
+    help=(
+      "Dataset name (e.g. ETTh1). Used to auto-resolve the DB path under "
+      "experiments/{dataset}/tune/. Required when --storage_folder is not provided."
+    ),
   )
   parser.add_argument(
-    "--show_plot", action="store_true", help="Flag to control whether to display the plot"
+    "--storage_folder",
+    type=str,
+    default=None,
+    help=(
+      "Legacy: explicit folder containing {study_name}.db (e.g. results/ETTh1). "
+      "If omitted, --dataset is required and the path is derived automatically from "
+      "the experiments/ layout."
+    ),
+  )
+  parser.add_argument(
+    "--show_plot", action="store_true", help="Flag to control whether to display the plot."
   )
   args: argparse.Namespace = parser.parse_args()
 
-  # Load the study
-  storage: str = f"sqlite:///{args.storage_folder}/{args.study_name}.db"
+  # Resolve storage URL — new layout (--dataset) takes precedence; legacy (--storage_folder)
+  # is kept for backwards compatibility with existing results/ databases.
+  if args.storage_folder is not None:
+    storage: str = f"sqlite:///{args.storage_folder}/{args.study_name}.db"
+  else:
+    if args.dataset is None:
+      parser.error("Provide --dataset or --storage_folder to locate the study DB.")
+    from utils.paths import TunePaths  # local import to avoid circular dependency risk
+
+    # study_name format: "{dataset}-{study_params}"  e.g.
+    #   "ETTh1-SeqLen96-PredLen96-FirstNormlayer-SecondNormnsan-RankReductionTrue"
+    # Strip the dataset prefix to obtain the study_params component.
+    study_params = args.study_name[len(args.dataset) + 1 :]
+    storage = TunePaths(dataset=args.dataset, study_params=study_params).db_url
   study: optuna.Study = optuna.create_study(
     study_name=args.study_name, storage=storage, load_if_exists=True
   )
