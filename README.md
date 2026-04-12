@@ -188,11 +188,15 @@ If you have any questions or concerns, feel free to reach out:
 ## 📖 Citation
 If you found this work useful, please consider citing it:
 ```bibtex
-@article{canet2025,
+@article{canet2026,
   title   = {CANet: ChronoAdaptive Network for Long-term Time Series Forecasting},
   author  = {Mert Sonmezer and Seyda Ertekin},
   journal = {Neural Networks},
-  year    = {2025},
+  year    = {2026},
+  volume  = {197},
+  pages   = {108495},
+  year    = {2026},
+  issn    = {0893-6080},
   doi     = {10.1016/j.neunet.2025.108495},
 }
 ```
