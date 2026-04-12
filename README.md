@@ -64,6 +64,26 @@ source .venv/bin/activate
 uv run python -c "import canet; print('Environment OK')"
 ```
 
+## 🗂️ Project Structure
+
+| Path | Description |
+|---|---|
+| `canet/canet.py` | `CANet` model and `TrainedCANet` Lightning wrapper |
+| `canet/modules/nsan.py` | Non-Stationary Adaptive Normalization (Style Blending Gate + AdaIN) |
+| `canet/modules/asb.py` | Adaptive Shift Block |
+| `canet/modules/icb.py` | Input Correlation Block |
+| `canet/modules/skp_layer.py` | Stacked Kronecker Product Layer |
+| `canet/modules/patchifier.py` | Multi-resolution patchifier |
+| `config/canet_config.py` | `CANetDataConfig` and `CANetTrainConfig` dataclasses |
+| `data/` | Dataset loaders (ETT variants, custom CSV) and Fourier time-feature encoding |
+| `forecasting/train.py` | Single-run training entry point |
+| `forecasting/train_tune.py` | Optuna hyperparameter tuning entry point |
+| `evaluation/inference.py` | Test-set inference, metrics, and optional visualization |
+| `evaluation/analyze_study.py` | Optuna study statistics and confidence intervals |
+| `evaluation/compute_model_complexity.py` | Parameter count and inference latency |
+| `scripts/` | Ready-to-run bash experiments (one script per dataset) |
+| `experiments/` | Auto-generated artifacts: checkpoints, `config.json`, `results.xlsx`, TensorBoard logs |
+
 ## 📊 Datasets
 
 Download the benchmark datasets from:
