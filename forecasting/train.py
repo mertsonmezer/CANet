@@ -2,6 +2,7 @@
 
 import argparse
 import datetime
+import logging
 import os
 from typing import Any, Dict
 
@@ -18,6 +19,8 @@ from torch.utils.data import DataLoader
 from canet.canet import TrainedCANet
 from config.canet_config import CANetDataConfig, CANetTrainConfig
 from data.data_factory import data_provider
+
+logger = logging.getLogger(__name__)
 from utils.utils import DEVICE
 
 
@@ -182,6 +185,8 @@ def main():
 
   args: argparse.Namespace = parser.parse_args()
 
+  logging.basicConfig(level=logging.INFO, format="%(asctime)s — %(name)s — %(levelname)s — %(message)s")
+
   data_config = CANetDataConfig(
     data_name=args.data_name,
     root_dir_path=args.root_path,
@@ -226,7 +231,7 @@ def main():
     f"RankReduction{train_config.use_rank_reduction}"
     f"{datetime.datetime.now().strftime('%Y_%m_%d-%H_%M_%S')}"
   )
-  print(f"========== {run_description} ===========")
+  logger.info("========== %s ===========", run_description)
 
   checkpoint_dir_path: str = f"logs/{run_description}"
   checkpoint_callback = ModelCheckpoint(
@@ -256,8 +261,8 @@ def main():
     checkpoint_dir_path,
     checkpoint_callback,
   )
-  print("MSE results", mse_result)
-  print("MAE  results", mae_result)
+  logger.info("MSE results: %s", mse_result)
+  logger.info("MAE results: %s", mae_result)
 
   # Save results into an Excel sheet
   df = pd.DataFrame({"MSE": mse_result, "MAE": mae_result})

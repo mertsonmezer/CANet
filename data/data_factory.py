@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import logging
+
 from torch.utils.data import DataLoader, Dataset
 
 from config.canet_config import CANetTrainConfig
 from data.data_loader import Dataset_Custom, Dataset_ETT_hour, Dataset_ETT_minute
+
+logger = logging.getLogger(__name__)
 
 data_dict = {
   "ETTh1": Dataset_ETT_hour,
@@ -41,7 +45,6 @@ def data_provider(config: CANetTrainConfig, flag: str) -> tuple[Dataset, DataLoa
     batch_size = config.batch_size  # bsz for train and valid
     freq = config.data_config.freq
 
-  # print("=====================", args.data)
   if "ETT" in config.data_config.data_name:
     data_set = Data(
       root_path=config.data_config.root_dir_path,
@@ -53,7 +56,7 @@ def data_provider(config: CANetTrainConfig, flag: str) -> tuple[Dataset, DataLoa
       timeenc=timeenc,
       freq=freq,
     )
-    print(flag, len(data_set))
+    logger.info("%s dataset size: %d", flag, len(data_set))
     data_loader = DataLoader(
       data_set, batch_size=batch_size, shuffle=shuffle_flag, drop_last=drop_last
     )
@@ -69,7 +72,7 @@ def data_provider(config: CANetTrainConfig, flag: str) -> tuple[Dataset, DataLoa
       freq=freq,
       seasonal_patterns=config.data_config.seasonal_patterns,
     )
-    print(flag, len(data_set))
+    logger.info("%s dataset size: %d", flag, len(data_set))
     data_loader = DataLoader(
       data_set, batch_size=batch_size, shuffle=shuffle_flag, drop_last=drop_last
     )

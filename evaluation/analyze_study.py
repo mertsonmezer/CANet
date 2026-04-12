@@ -1,6 +1,7 @@
 """Analysis utilities for Optuna hyperparameter search studies."""
 
 import argparse
+import logging
 import warnings
 from typing import Tuple
 
@@ -12,6 +13,8 @@ from optuna.trial._frozen import FrozenTrial
 from optuna.visualization import plot_slice
 
 warnings.filterwarnings("ignore", category=UserWarning)
+
+logger = logging.getLogger(__name__)
 
 
 def get_filtered_trials(study: optuna.study.Study) -> NDArray[np.float64]:
@@ -82,10 +85,10 @@ def main():
 
   # Display the best trial
   best_trial: FrozenTrial = study.best_trial
-  print(f"Best Trial is {best_trial._trial_id} with the value {best_trial.value}")
-  print("Params:")
+  logger.info("Best Trial is %s with the value %s", best_trial._trial_id, best_trial.value)
+  logger.info("Params:")
   for param, value in best_trial.params.items():
-    print(f"  {param}: {value}")
+    logger.info("  %s: %s", param, value)
 
   # Plot best trial visualization if requested
   if args.show_plot:
@@ -98,10 +101,11 @@ def main():
     filtered_trials
   )
 
-  # Print results
-  print(f"Mean of the filtered objective values: {np.mean(filtered_trials)}")
-  print(
-    f"90% confidence interval for the objective values: {float(confidence_interval[0])}, {float(confidence_interval[1])}"
+  logger.info("Mean of the filtered objective values: %s", np.mean(filtered_trials))
+  logger.info(
+    "90%% confidence interval for the objective values: %s, %s",
+    float(confidence_interval[0]),
+    float(confidence_interval[1]),
   )
 
 

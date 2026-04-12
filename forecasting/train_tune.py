@@ -3,6 +3,7 @@
 import argparse
 import ast
 import json
+import logging
 import os
 import shutil
 from dataclasses import asdict
@@ -27,6 +28,8 @@ from config.canet_config import CANetDataConfig, CANetTrainConfig
 from data.data_factory import data_provider
 from utils.utils import DEVICE
 
+logger = logging.getLogger(__name__)
+
 
 def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: str):
   """
@@ -41,7 +44,7 @@ def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: st
   """
 
   best_trial_number: int = study.best_trial.number
-  print(f"Best trial is {best_trial_number}, cleaning up non-best trial directories.")
+  logger.info("Best trial is %d, cleaning up non-best trial directories.", best_trial_number)
 
   for trial in study.trials:
     if trial.number != best_trial_number:
@@ -54,7 +57,7 @@ def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: st
 
       # Delete the trial directory if it exists
       if os.path.exists(trial_dir):
-        print(f"Deleting {trial_dir}")
+        logger.info("Deleting %s", trial_dir)
         shutil.rmtree(trial_dir, ignore_errors=True)
 
 
@@ -157,7 +160,7 @@ def objective(
     f"FirstNorm{config.first_norm_layer}-SecondNorm{config.second_norm_layer}-"
     f"RankReduction{config.use_rank_reduction}-Trial{trial._trial_id - 1}"
   )
-  print(f"========== {run_description} ===========")
+  logger.info("========== %s ===========", run_description)
 
   checkpoint_dir_path: str = f"logs/{run_description}"
   checkpoint_callback = ModelCheckpoint(
@@ -305,6 +308,8 @@ def main():
 
   args: argparse.Namespace = parser.parse_args()
 
+  logging.basicConfig(level=logging.INFO, format="%(asctime)s — %(name)s — %(levelname)s — %(message)s")
+
   args.patch_sizes = ast.literal_eval(args.patch_sizes)
 
   data_config = CANetDataConfig(
@@ -367,18 +372,17 @@ def main():
   # Clean up all non-best trial directories
   clean_trial_logs(study, train_config, "logs")
 
-  print("Study statistics: ")
-  print("  Number of finished trials: ", len(study.trials))
-  print("  Number of pruned trials: ", len(pruned_trials))
-  print("  Number of complete trials: ", len(complete_trials))
+  logger.info("Study statistics:")
+  logger.info("  Number of finished trials: %d", len(study.trials))
+  logger.info("  Number of pruned trials: %d", len(pruned_trials))
+  logger.info("  Number of complete trials: %d", len(complete_trials))
 
-  print("Best trial:")
   trial: FrozenTrial = study.best_trial
-
-  print("  Value: ", trial.value)
-  print("  Params: ")
+  logger.info("Best trial:")
+  logger.info("  Value: %s", trial.value)
+  logger.info("  Params:")
   for key, value in trial.params.items():
-    print(f"    {key}: {value}")
+    logger.info("    %s: %s", key, value)
 
 
 if __name__ == "__main__":

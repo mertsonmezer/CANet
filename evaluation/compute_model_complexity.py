@@ -1,6 +1,7 @@
 """Model complexity and inference-time profiling utilities."""
 
 import argparse
+import logging
 import time
 
 import torch
@@ -10,6 +11,8 @@ from torch.utils.data import DataLoader
 from canet.canet import TrainedCANet
 from data.data_factory import data_provider
 from utils.utils import DEVICE
+
+logger = logging.getLogger(__name__)
 
 
 def calculate_model_size(model: TrainedCANet) -> int:
@@ -77,6 +80,7 @@ def measure_inference_time(
 
 
 def main():
+  logging.basicConfig(level=logging.INFO, format="%(asctime)s — %(name)s — %(levelname)s — %(message)s")
   parser = argparse.ArgumentParser(description="Evaluate CANet model performance.")
   parser.add_argument(
     "--model_path",
@@ -95,11 +99,11 @@ def main():
 
   # Model size calculation
   total_params: int = calculate_model_size(model)
-  print(f"Total Parameters: {total_params:,}")
+  logger.info("Total Parameters: %s", f"{total_params:,}")
 
   # Inference time calculation
   avg_inference_time: float = measure_inference_time(model, test_dataloader)
-  print(f"Average Inference Time: {avg_inference_time:.4f} ms")
+  logger.info("Average Inference Time: %.4f ms", avg_inference_time)
 
 
 if __name__ == "__main__":

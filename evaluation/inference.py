@@ -1,6 +1,7 @@
 """Inference and result visualization for trained CANet models."""
 
 import argparse
+import logging
 import time
 
 import matplotlib.pyplot as plt
@@ -12,6 +13,8 @@ from torchmetrics import MeanAbsoluteError, MeanSquaredError
 from canet.canet import TrainedCANet
 from data.data_factory import data_provider
 from utils.utils import DEVICE
+
+logger = logging.getLogger(__name__)
 
 
 def perform_inference(
@@ -75,9 +78,9 @@ def perform_inference(
   mae: float = mae_metric(outputs, targets).item()
 
   # Display inference time and metrics
-  print(f"Inference Time: {inference_time:.4f} seconds")
-  print(f"Mean Squared Error (MSE): {mse:.4f}")
-  print(f"Mean Absolute Error (MAE): {mae:.4f}")
+  logger.info("Inference Time: %.4f seconds", inference_time)
+  logger.info("Mean Squared Error (MSE): %.4f", mse)
+  logger.info("Mean Absolute Error (MAE): %.4f", mae)
 
   return inputs, targets, outputs, inference_time, mse, mae
 
@@ -130,6 +133,7 @@ def visualize_results(inputs: Tensor, targets: Tensor, outputs: Tensor, example_
 
 
 def main():
+  logging.basicConfig(level=logging.INFO, format="%(asctime)s — %(name)s — %(levelname)s — %(message)s")
   parser = argparse.ArgumentParser(description="Inference of CANet model.")
   parser.add_argument(
     "--model_path",
