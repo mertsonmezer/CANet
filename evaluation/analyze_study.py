@@ -67,7 +67,12 @@ def main() -> None:
     level=logging.INFO,
     format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
   )
-  parser = argparse.ArgumentParser(description="Analyze Optuna study results.")
+  parser = argparse.ArgumentParser(
+    description=(
+      "Analyze a completed Optuna HPO study: print best trial, parameter breakdown, "
+      "and 90% confidence interval of filtered objective values."
+    )
+  )
   parser.add_argument("--study_name", type=str, required=True, help="Name of the Optuna study.")
   parser.add_argument(
     "--dataset",

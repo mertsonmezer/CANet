@@ -136,7 +136,12 @@ def main() -> None:
     level=logging.INFO,
     format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
   )
-  parser = argparse.ArgumentParser(description="Inference of CANet model.")
+  parser = argparse.ArgumentParser(
+    description=(
+      "Run inference on one test batch from a trained CANet checkpoint "
+      "and report MSE, MAE, and latency."
+    )
+  )
   parser.add_argument(
     "--model_path",
     type=str,
