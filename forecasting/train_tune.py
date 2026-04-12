@@ -320,6 +320,7 @@ def main() -> None:
 
   train_config = CANetTrainConfig(
     num_epochs=args.num_epochs,
+    depth=args.depth,
     data_config=data_config,
     seq_len=args.seq_len,
     label_len=args.label_len,

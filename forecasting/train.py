@@ -138,7 +138,7 @@ def main() -> None:
     default=64,
     help="Embedding dimensionality of the model.",
   )
-  parser.add_argument("--depth", type=int, default=3, help="Number of layers in the model.")
+  parser.add_argument("--depth", type=int, default=2, help="Number of layers in the model.")
   parser.add_argument("--dropout", type=float, default=0.5, help="Dropout rate.")
   parser.add_argument(
     "--first_norm_layer",
@@ -185,6 +185,7 @@ def main() -> None:
     default=1,
     help="Gradient accumulation steps.",
   )
+  parser.add_argument("--train_lr", type=float, default=1e-4, help="Learning rate.")
   parser.add_argument("--seed", type=int, default=56, help="Random seed.")
 
   args: argparse.Namespace = parser.parse_args()
@@ -208,6 +209,7 @@ def main() -> None:
   train_config = CANetTrainConfig(
     num_epochs=args.num_epochs,
     batch_size=args.batch_size,
+    train_lr=args.train_lr,
     data_config=data_config,
     patch_sizes=args.patch_sizes,
     embed_dim=args.embed_dim,
