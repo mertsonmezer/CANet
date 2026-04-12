@@ -18,12 +18,54 @@ from lightning.pytorch.callbacks import (
 )
 from torch.utils.data import DataLoader
 
+import optuna
+
 from canet.canet import TrainedCANet
 from config.canet_config import CANetDataConfig, CANetTrainConfig
 from data.data_factory import data_provider
-from utils.paths import TrainPaths
+from utils.paths import TrainPaths, TunePaths, build_study_params
 
 logger = logging.getLogger(__name__)
+
+
+def _load_best_params(dataset: str, study_params: str) -> dict:
+  """Load the best trial's tuned hyperparameters from a study DB.
+
+  The study is identified by the dataset name and study_params string,
+  which together determine the path to the Optuna SQLite database via
+  TunePaths. The study name stored inside the DB is reconstructed as
+  ``{dataset}-{study_params}``, matching the convention in train_tune.py.
+
+  Args:
+    dataset: Dataset identifier, e.g. ``"ETTh1"``.
+    study_params: Output of :func:`build_study_params` for this configuration.
+
+  Returns:
+    A dict of the best trial's suggested hyperparameters, e.g.::
+
+      {
+        "train_lr": 0.0012,
+        "batch_size": 128,
+        "dropout_rate": 0.35,
+        "embed_dim": 64,
+        "patch_sizes": [8, 64],
+      }
+
+  Raises:
+    FileNotFoundError: If the study DB does not exist at the expected path.
+    RuntimeError: If the study has no completed trials.
+  """
+  paths = TunePaths(dataset=dataset, study_params=study_params)
+  if not paths.db_path.exists():
+    raise FileNotFoundError(
+      f"No study DB found at {paths.db_path}. "
+      "Run train_tune.py for this configuration first."
+    )
+  study_name = f"{dataset}-{study_params}"
+  study = optuna.load_study(study_name=study_name, storage=paths.db_url)
+  if not study.best_trial:
+    raise RuntimeError(f"Study '{study_name}' has no completed trials.")
+  return study.best_trial.params
 
 
 def train_model(
@@ -187,6 +229,17 @@ def main() -> None:
   )
   parser.add_argument("--train_lr", type=float, default=1e-4, help="Learning rate.")
   parser.add_argument("--seed", type=int, default=56, help="Random seed.")
+  parser.add_argument(
+    "--from_study",
+    action="store_true",
+    help=(
+      "Load the best hyperparameters from the Optuna study DB for this "
+      "configuration and override --train_lr, --batch_size, --dropout, "
+      "--embed_dim, and --patch_sizes. The study is identified automatically "
+      "from --data_name, --seq_len, --pred_len, --first_norm_layer, "
+      "--second_norm_layer, and --use_rank_reduction."
+    ),
+  )
 
   args: argparse.Namespace = parser.parse_args()
 
@@ -194,6 +247,22 @@ def main() -> None:
     level=logging.INFO,
     format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
   )
+
+  if args.from_study:
+    study_params = build_study_params(
+      args.seq_len,
+      args.pred_len,
+      args.first_norm_layer,
+      args.second_norm_layer,
+      args.use_rank_reduction,
+    )
+    best_params = _load_best_params(args.data_name, study_params)
+    logger.info("Loaded best hyperparameters from study: %s", best_params)
+    args.train_lr = best_params["train_lr"]
+    args.batch_size = best_params["batch_size"]
+    args.dropout = best_params["dropout_rate"]
+    args.embed_dim = best_params["embed_dim"]
+    args.patch_sizes = best_params["patch_sizes"]
 
   data_config = CANetDataConfig(
     data_name=args.data_name,
