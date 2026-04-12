@@ -210,3 +210,5 @@ We appreciate the following papers and their repositories for providing valuable
 | A Time Series is Worth 64 Words: Long-term Forecasting with Transformers | [![yuqinie98/PatchTST](https://img.shields.io/badge/-PathTST-181717?logo=github&logoColor=white&style=for-the-badge)](https://github.com/yuqinie98/PatchTST)|
 | Deep Adaptive Input Normalization for Time Series Forecasting | [![passalis/dain](https://img.shields.io/badge/-DAIN-181717?logo=github&logoColor=white&style=for-the-badge)](https://github.com/passalis/dain) |
 
+Documentation refinement and cosmetic enhancements for this repository were assisted by [Claude Code](https://claude.ai/code).
+
