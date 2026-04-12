@@ -1,3 +1,6 @@
+"""Deep Adaptive Input Normalization (DAIN) module."""
+
+import logging
 from typing import Literal
 
 import lightning as L
@@ -6,8 +9,29 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
+_DAIN_EPS: float = 1e-8
+
+logger = logging.getLogger(__name__)
+
 
 class DAIN(L.LightningModule):
+  """Deep Adaptive Input Normalization with four operating modes.
+
+  Modes (controlled by the ``mode`` argument):
+    ``"avg"``: subtract the channel mean.
+    ``"adaptive_avg"``: subtract a learned linear projection of the mean.
+    ``"adaptive_scale"``: adaptive mean + learned standard-deviation scaling.
+    ``"full"``: adaptive mean + scaling + learned sigmoid gate.
+    ``None``: identity (no normalization).
+
+  Args:
+    mode: Normalization mode (see above); default ``"full"``.
+    mean_lr: Learning-rate hint for the mean layer (informational only).
+    gate_lr: Learning-rate hint for the gating layer.
+    scale_lr: Learning-rate hint for the scaling layer.
+    input_dim: Number of input channels; default 144.
+  """
+
   def __init__(
     self,
     mode: Literal["avg", "adaptive_avg", "adaptive_scale", "full", None] = "full",
@@ -15,7 +39,7 @@ class DAIN(L.LightningModule):
     gate_lr: float = 1e-3,
     scale_lr: float = 1e-5,
     input_dim: int = 144,
-  ):
+  ) -> None:
     super().__init__()
 
     self.mode: Literal["avg", "adaptive_avg", "adaptive_scale", "full", None] = mode
@@ -35,9 +59,10 @@ class DAIN(L.LightningModule):
     self.gating_layer = nn.Linear(input_dim, input_dim)
 
     # Small epsilon value for numerical stability
-    self.eps = 1e-8
+    self.eps = _DAIN_EPS
 
   def forward(self, x: Tensor) -> Tensor:
+    """Normalize input tensor according to the configured mode."""
     if self.mode is None:
       # Nothing to normalize
       return x
@@ -99,7 +124,8 @@ class DAIN(L.LightningModule):
     return x
 
 
-def demo():
+def demo() -> None:
+  """Demonstrate DAIN normalization on a random input tensor."""
   mode: str = "full"
   dimension: int = 144
   input: Tensor = torch.randn(10, dimension, 5)
@@ -107,10 +133,9 @@ def demo():
   dain = DAIN(mode=mode, input_dim=dimension)
   output: Tensor = dain(input)
 
-  # Print shapes and sample output
-  print(f"Input shape: {input.shape}")
-  print(f"Output shape: {output.shape}")
-  print(f"Sample output:\n{output}")
+  logger.info("Input shape: %s", input.shape)
+  logger.info("Output shape: %s", output.shape)
+  logger.debug("Sample output:\n%s", output)
 
 
 if __name__ == "__main__":

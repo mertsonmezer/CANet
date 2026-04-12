@@ -5,7 +5,7 @@ import os
 import shutil
 from dataclasses import asdict
 from functools import partial
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import lightning as L
 import optuna
@@ -27,9 +27,9 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Define ranges for hyperparameter tuning
 LOW_LR, HIGH_LR = 1e-4, 1e-2
 LOW_DROPOUT, HIGH_DROPOUT = 0.3, 0.5
-BATCH_SIZES: List[int] = [64, 128, 256, 512, 1024]
-PATCH_SIZES: List[str] = ["8,32", "8,48", "8,64", "16,48", "16,64"]  # Convert to strings for optuna
-EMBED_DIMS: List[int] = [32, 64, 128]
+BATCH_SIZES: list[int] = [64, 128, 256, 512, 1024]
+PATCH_SIZES: list[str] = ["8,32", "8,48", "8,64", "16,48", "16,64"]  # Convert to strings for optuna
+EMBED_DIMS: list[int] = [32, 64, 128]
 
 
 def clean_trial_logs(study: optuna.Study, config: TrainConfig, logs_dir: str):
@@ -52,7 +52,7 @@ def train_model(
   test_dataloader: DataLoader[torch.dtype],
   checkpoint_dir_path: str,
   checkpoint_callback: ModelCheckpoint,
-) -> tuple[TrainedNet, Dict[str, float], Dict[str, float]]:
+) -> tuple[TrainedNet, dict[str, float], dict[str, float]]:
   trainer = L.Trainer(
     default_root_dir=checkpoint_dir_path,
     accelerator="auto",
@@ -82,8 +82,8 @@ def train_model(
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)
   test_result = trainer.test(model, dataloaders=test_dataloader, verbose=False)
 
-  mse_result: Dict[str, float] = {"test": test_result[0]["test_mse"], "val": val_result[0]["test_mse"]}
-  mae_result: Dict[str, float] = {"test": test_result[0]["test_mae"], "val": val_result[0]["test_mae"]}
+  mse_result: dict[str, float] = {"test": test_result[0]["test_mse"], "val": val_result[0]["test_mse"]}
+  mae_result: dict[str, float] = {"test": test_result[0]["test_mae"], "val": val_result[0]["test_mae"]}
 
   return model, mse_result, mae_result
 
@@ -137,7 +137,7 @@ def objective(trial: optuna.trial.Trial, config: TrainConfig) -> float:
   return mse_result["test"]
 
 
-def run_single_training(config: TrainConfig, hyperparams: Dict[str, Any], seed: int, run_suffix: str = "") -> Tuple[Dict[str, float], Dict[str, float]]:
+def run_single_training(config: TrainConfig, hyperparams: dict[str, Any], seed: int, run_suffix: str = "") -> tuple[dict[str, float], dict[str, float]]:
   """Run a single training with specified hyperparameters and seed. Returns (mse_result, mae_result)."""
   # Set hyperparameters
   config.batch_size = hyperparams["batch_size"]
@@ -192,7 +192,7 @@ def run_single_training(config: TrainConfig, hyperparams: Dict[str, Any], seed: 
   return mse_result, mae_result
 
 
-def run_robustness_test(config: TrainConfig, best_hyperparams: Dict[str, Any], tolerance: float = 1e-5) -> Tuple[List[Dict[str, float]], List[Dict[str, float]]]:
+def run_robustness_test(config: TrainConfig, best_hyperparams: dict[str, Any], tolerance: float = 1e-5) -> tuple[list[dict[str, float]], list[dict[str, float]]]:
   """Run robustness test with multiple seeds and return both MSE and MAE results."""
   seeds = [config.seed, 0, 2, 42, 2025]
   mse_results = []
@@ -216,7 +216,7 @@ def run_robustness_test(config: TrainConfig, best_hyperparams: Dict[str, Any], t
   return mse_results, mae_results
 
 
-def save_robustness_results(mse_results: List[Dict[str, float]], mae_results: List[Dict[str, float]], config: TrainConfig, output_dir: str = "robustness_results") -> str:
+def save_robustness_results(mse_results: list[dict[str, float]], mae_results: list[dict[str, float]], config: TrainConfig, output_dir: str = "robustness_results") -> str:
   """Save robustness test results to Excel file."""
   os.makedirs(output_dir, exist_ok=True)
 
@@ -282,7 +282,7 @@ def find_optuna_database(config: TrainConfig, results_dir: str = "results") -> O
   return None
 
 
-def load_best_result_from_database(db_path: str) -> Optional[Tuple[float, float, Dict[str, Any]]]:
+def load_best_result_from_database(db_path: str) -> Optional[tuple[float, float, dict[str, Any]]]:
   """Load the best result (MSE, MAE, and hyperparameters) from optuna database."""
   try:
     study = optuna.load_study(study_name=None, storage=f"sqlite:///{db_path}")
@@ -396,8 +396,8 @@ def main():
   )
 
   # Output study statistics and results
-  pruned_trials: List[FrozenTrial] = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
-  complete_trials: List[FrozenTrial] = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+  pruned_trials: list[FrozenTrial] = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
+  complete_trials: list[FrozenTrial] = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
 
   # Clean up all non-best trial directories
   clean_trial_logs(study, train_config, "logs")

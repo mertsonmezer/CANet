@@ -1,21 +1,54 @@
+"""Adaptive Spectral Block for frequency-domain noise reduction."""
+
 import lightning as L
 import torch
 import torch.nn as nn
 from timm.models.layers import trunc_normal_
 from torch import Tensor
 
+_WEIGHT_INIT_STD: float = 0.02
+_SPECTRAL_EPS: float = 1e-6
+
 
 class AdaptiveSpectralBlock(L.LightningModule):
-  def __init__(self, dim: int):
-    super().__init__()
-    self.complex_weight_high = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * 0.02)
-    self.complex_weight = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * 0.02)
+  """Frequency-domain feature transformation with adaptive masking.
 
-    trunc_normal_(self.complex_weight_high, std=0.02)
-    trunc_normal_(self.complex_weight, std=0.02)
+  Applies learned complex weights in the frequency domain and attenuates
+  low-energy high-frequency components via an energy-normalised adaptive mask.
+
+  Args:
+    dim: Feature dimension (number of channels C).
+
+  Shape:
+    Input:  ``(B, N, C)`` — batch, sequence length, channels.
+    Output: ``(B, N, C)`` — same shape as input.
+  """
+
+  def __init__(self, dim: int) -> None:
+    super().__init__()
+    self.complex_weight_high = nn.Parameter(
+      torch.randn(dim, 2, dtype=torch.float32) * _WEIGHT_INIT_STD
+    )
+    self.complex_weight = nn.Parameter(
+      torch.randn(dim, 2, dtype=torch.float32) * _WEIGHT_INIT_STD
+    )
+
+    trunc_normal_(self.complex_weight_high, std=_WEIGHT_INIT_STD)
+    trunc_normal_(self.complex_weight, std=_WEIGHT_INIT_STD)
     self.threshold_param = nn.Parameter(torch.rand(1))
 
   def create_adaptive_high_freq_mask(self, x_fft: Tensor) -> Tensor:
+    """Build a soft mask that passes high-energy frequency components.
+
+    Computes per-patch energy, normalises by the median energy, and
+    produces a differentiable mask via the straight-through estimator.
+
+    Args:
+      x_fft: Complex FFT output of shape ``(B, N, C)``.
+
+    Returns:
+      Binary-like mask of shape ``(B, N, 1)`` for broadcasting over C.
+    """
     B, _, _ = x_fft.shape
 
     # Calculate energy in the frequency domain
@@ -27,7 +60,7 @@ class AdaptiveSpectralBlock(L.LightningModule):
     median_energy = median_energy.view(B, 1)  # Reshape to match the original dimensions
 
     # Normalize energy
-    normalized_energy: Tensor = energy / (median_energy + 1e-6)
+    normalized_energy: Tensor = energy / (median_energy + _SPECTRAL_EPS)
 
     adaptive_mask: Tensor = (
       (normalized_energy > self.threshold_param).float() - self.threshold_param
@@ -37,6 +70,14 @@ class AdaptiveSpectralBlock(L.LightningModule):
     return adaptive_mask
 
   def forward(self, x_in: Tensor) -> Tensor:
+    """Apply FFT, adaptive masking, learned weights, and IFFT.
+
+    Args:
+      x_in: Input tensor of shape ``(B, N, C)``.
+
+    Returns:
+      Filtered output of shape ``(B, N, C)``, same dtype as input.
+    """
     B, N, C = x_in.shape
 
     dtype = x_in.dtype

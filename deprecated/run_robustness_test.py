@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Example script to run robustness testing for the best MSE score.
+"""Example script to run robustness testing for the best MSE score.
 
 Usage:
 python run_robustness_test.py --best_mse 0.123456 --num_trials 5

@@ -1,3 +1,6 @@
+"""Positional encoding utilities for patch sequences."""
+
+import logging
 import math
 from typing import Literal
 
@@ -5,10 +8,15 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
+_SINUSOIDAL_BASE: float = 10000.0
 
-def sin_cos_positional_encoding(sequence_length: int, embedding_dim: int, normalize: bool = False) -> torch.Tensor:
-  """
-  Generates a sinusoidal positional encoding matrix.
+logger = logging.getLogger(__name__)
+
+
+def sin_cos_positional_encoding(
+  sequence_length: int, embedding_dim: int, normalize: bool = False
+) -> torch.Tensor:
+  """Generates a sinusoidal positional encoding matrix.
 
   Args:
     sequence_length (int): Length of the input sequence.
@@ -16,13 +24,16 @@ def sin_cos_positional_encoding(sequence_length: int, embedding_dim: int, normal
     normalize (bool, optional): Whether to normalize the encoding. Defaults to False.
 
   Returns:
-    torch.Tensor: A tensor of shape (sequence_length, embedding_dim) containing positional encodings.
+    torch.Tensor: A tensor of shape ``(sequence_length, embedding_dim)`` containing
+      positional encodings.
   """
   encoding: Tensor = torch.zeros(sequence_length, embedding_dim)
   positions: Tensor = torch.arange(sequence_length).unsqueeze(1)  # Position indices
 
   # Compute the scaling term for sine and cosine functions
-  frequency_scaling: Tensor = torch.exp(torch.arange(0, embedding_dim, 2) * -(math.log(10000.0) / embedding_dim))
+  frequency_scaling: Tensor = torch.exp(
+    torch.arange(0, embedding_dim, 2) * -(math.log(_SINUSOIDAL_BASE) / embedding_dim)
+  )
 
   # Apply sine to even indices and cosine to odd indices
   encoding[:, 0::2] = torch.sin(positions * frequency_scaling)
@@ -37,12 +48,12 @@ def sin_cos_positional_encoding(sequence_length: int, embedding_dim: int, normal
 def coordinate_1d_positional_encoding(
   sequence_length: int, use_exponential: bool = False, normalize: bool = True
 ) -> torch.Tensor:
-  """
-  Generates a 1D coordinate-based positional encoding vector.
+  """Generates a 1D coordinate-based positional encoding vector.
 
   Args:
     sequence_length (int): Length of the input sequence.
-    use_exponential (bool, optional): Whether to use an exponential scale for encoding. Defaults to False.
+    use_exponential (bool, optional): Whether to use an exponential scale for encoding.
+      Defaults to False.
     normalize (bool, optional): Whether to normalize the encoding. Defaults to True.
 
   Returns:
@@ -51,10 +62,14 @@ def coordinate_1d_positional_encoding(
   scaling_factor: float = 0.5 if use_exponential else 1.0
 
   # Compute the 1D positional encoding
-  coordinate_encoding: Tensor = 2 * (torch.linspace(0, 1, sequence_length).reshape(-1, 1) ** scaling_factor) - 1
+  coordinate_encoding: Tensor = (
+    2 * (torch.linspace(0, 1, sequence_length).reshape(-1, 1) ** scaling_factor) - 1
+  )
 
   if normalize:
-    coordinate_encoding = (coordinate_encoding - coordinate_encoding.mean()) / (coordinate_encoding.std() * 10)
+    coordinate_encoding = (coordinate_encoding - coordinate_encoding.mean()) / (
+      coordinate_encoding.std() * 10
+    )
 
   return coordinate_encoding
 
@@ -66,18 +81,19 @@ def coordinate_2d_positional_encoding(
   normalize: bool = True,
   tolerance: float = 1e-3,
 ) -> Tensor:
-  """
-  Generates a 2D coordinate-based positional encoding matrix.
+  """Generates a 2D coordinate-based positional encoding matrix.
 
   Args:
     sequence_length (int): Length of the input sequence.
     embedding_dim (int): Dimensionality of the embeddings.
-    use_exponential (bool, optional): Whether to use an exponential scale for encoding. Defaults to False.
+    use_exponential (bool, optional): Whether to use an exponential scale for encoding.
+      Defaults to False.
     normalize (bool, optional): Whether to normalize the encoding. Defaults to True.
     tolerance (float, optional): Tolerance for the mean value of the encoding. Defaults to 1e-3.
 
   Returns:
-    torch.Tensor: A tensor of shape (sequence_length, embedding_dim) containing 2D positional encodings.
+    torch.Tensor: A tensor of shape ``(sequence_length, embedding_dim)`` containing
+      2D positional encodings.
   """
   scaling_factor: float = 0.5 if use_exponential else 1.0
   coordinate_encoding: Tensor = torch.empty(0)  # Placeholder for the positional encoding
@@ -99,21 +115,32 @@ def coordinate_2d_positional_encoding(
       scaling_factor -= 0.001
 
   if normalize:
-    coordinate_encoding = (coordinate_encoding - coordinate_encoding.mean()) / (coordinate_encoding.std() * 10)
+    coordinate_encoding = (coordinate_encoding - coordinate_encoding.mean()) / (
+      coordinate_encoding.std() * 10
+    )
 
   return coordinate_encoding
 
 
 def create_positional_encoding(
   encoding_type: Literal[
-    "zero", "zeros", "normal", "gauss", "uniform", "lin1d", "exp1d", "lin2d", "exp2d", "sincos", None
+    "zero",
+    "zeros",
+    "normal",
+    "gauss",
+    "uniform",
+    "lin1d",
+    "exp1d",
+    "lin2d",
+    "exp2d",
+    "sincos",
+    None,
   ],
   learnable: bool,
   sequence_length: int,
   embedding_dim: int,
 ) -> Tensor:
-  """
-  Creates various types of positional encodings.
+  """Creates various types of positional encodings.
 
   Args:
     encoding_type (Literal): Type of positional encoding.
@@ -148,10 +175,14 @@ def create_positional_encoding(
     nn.init.uniform_(position_encoding, a=0.0, b=0.1)
 
   elif encoding_type == "lin1d":
-    position_encoding = coordinate_1d_positional_encoding(sequence_length, use_exponential=False, normalize=True)
+    position_encoding = coordinate_1d_positional_encoding(
+      sequence_length, use_exponential=False, normalize=True
+    )
 
   elif encoding_type == "exp1d":
-    position_encoding = coordinate_1d_positional_encoding(sequence_length, use_exponential=True, normalize=True)
+    position_encoding = coordinate_1d_positional_encoding(
+      sequence_length, use_exponential=True, normalize=True
+    )
 
   elif encoding_type == "lin2d":
     position_encoding = coordinate_2d_positional_encoding(
@@ -176,12 +207,13 @@ def create_positional_encoding(
   return nn.Parameter(position_encoding, requires_grad=learnable)
 
 
-def demo():
+def demo() -> None:
+  """Demonstrate create_positional_encoding with an exp2d encoding."""
   positional_encoding: Tensor = create_positional_encoding(
     encoding_type="exp2d", learnable=True, sequence_length=384, embedding_dim=64
   )
 
-  print(f"Positional encoding shape: {positional_encoding.shape}")
+  logger.info("Positional encoding shape: %s", positional_encoding.shape)
 
 
 if __name__ == "__main__":

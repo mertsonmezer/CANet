@@ -1,3 +1,6 @@
+"""Stacked Kronecker Product linear layer for efficient rank reduction."""
+
+import logging
 import math
 
 import lightning as L
@@ -7,9 +10,32 @@ from torch import Tensor
 
 from utils.utils import round_up_sqrt
 
+logger = logging.getLogger(__name__)
+
 
 class StackedKroneckerProductLayer(L.LightningModule):
-  def __init__(self, input_dim: int, output_dim: int, scale: float = 0.5, verbose: bool = False):
+  """Parameter-efficient linear layer using a Stacked Kronecker Product.
+
+  Approximates an ``(input_dim × output_dim)`` weight matrix as the Kronecker
+  product of two low-rank matrices, reducing the parameter count by roughly
+  ``1 / (2 * scale)``.
+
+  Args:
+    input_dim: Input feature dimension.
+    output_dim: Output feature dimension.
+    scale: Controls the reduced rank; 0.5 gives ≈50% of the full parameter
+      count. Default 0.5.
+    verbose: If True, prints layer configuration on construction.
+
+  Raises:
+    ValueError: If ``input_dim`` or ``output_dim`` is not a positive integer.
+    ValueError: If the input tensor's last dimension does not match
+      ``input_dim``.
+  """
+
+  def __init__(
+    self, input_dim: int, output_dim: int, scale: float = 0.5, verbose: bool = False
+  ) -> None:
     super().__init__()
 
     if input_dim <= 0 or output_dim <= 0:
@@ -40,13 +66,19 @@ class StackedKroneckerProductLayer(L.LightningModule):
     nn.init.kaiming_uniform_(self.factor_B, a=math.sqrt(5))
 
   def forward(self, x: Tensor) -> Tensor:
+    """Apply the Kronecker-product linear projection to x."""
     if x.size(-1) != self.input_dim:
       raise ValueError(f"Expected input dimension {self.input_dim}, but got {x.size(-1)}.")
 
     # Construct the full weight matrix and truncate to (input_dim, output_dim)
     full_weight: Tensor = (
       torch.matmul(self.factor_A, self.factor_B)
-      .reshape(self.rounded_input_dim, self.rounded_output_dim, self.rounded_input_dim, self.rounded_output_dim)
+      .reshape(
+        self.rounded_input_dim,
+        self.rounded_output_dim,
+        self.rounded_input_dim,
+        self.rounded_output_dim,
+      )
       .transpose(1, 2)
       .reshape(self.extended_input_dim, self.extended_output_dim)
     )
@@ -55,20 +87,28 @@ class StackedKroneckerProductLayer(L.LightningModule):
     return torch.matmul(x, truncated_weight)
 
   def _print_layer_info(self) -> None:
-    """
-    Logs the configuration and rank reduction of the layer.
-    """
-    reduction_percentage: float = (2 * self.reduced_rank * self.kron_dim) * 100.0 / (self.input_dim * self.output_dim)
-    print(
-      f"Using StackedKroneckerProductLayer: input_dim={self.input_dim}, output_dim={self.output_dim}, "
-      f"reduced_rank={self.reduced_rank}, rounded_input_dim={self.rounded_input_dim}, "
-      f"rounded_output_dim={self.rounded_output_dim}, extended_input_dim={self.extended_input_dim}, "
-      f"extended_output_dim={self.extended_output_dim}, kron_dim={self.kron_dim}, "
-      f"reduction={reduction_percentage:.2f}%"
+    """Logs the configuration and rank reduction of the layer."""
+    reduction_percentage: float = (
+      (2 * self.reduced_rank * self.kron_dim) * 100.0 / (self.input_dim * self.output_dim)
+    )
+    logger.debug(
+      "Using StackedKroneckerProductLayer: input_dim=%d, output_dim=%d, "
+      "reduced_rank=%d, rounded_input_dim=%d, rounded_output_dim=%d, "
+      "extended_input_dim=%d, extended_output_dim=%d, kron_dim=%d, reduction=%.2f%%",
+      self.input_dim,
+      self.output_dim,
+      self.reduced_rank,
+      self.rounded_input_dim,
+      self.rounded_output_dim,
+      self.extended_input_dim,
+      self.extended_output_dim,
+      self.kron_dim,
+      reduction_percentage,
     )
 
 
-def demo():
+def demo() -> None:
+  """Demonstrate StackedKroneckerProductLayer on a random input tensor."""
   input_dim = 10
   output_dim = 8
   batch_size = 4
@@ -80,10 +120,9 @@ def demo():
   skp_layer = StackedKroneckerProductLayer(input_dim=input_dim, output_dim=output_dim, scale=scale)
   output: Tensor = skp_layer(input)
 
-  # Print shapes and sample output
-  print(f"Input shape: {input.shape}")
-  print(f"Output shape: {output.shape}")
-  print(f"Sample output:\n{output}")
+  logger.info("Input shape: %s", input.shape)
+  logger.info("Output shape: %s", output.shape)
+  logger.debug("Sample output:\n%s", output)
 
 
 if __name__ == "__main__":

@@ -17,4 +17,29 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["ptflops>=0.7.4"]
+dev = ["ptflops>=0.7.4", "ruff>=0.4"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+indent-width = 2
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "ANN", "D"]
+ignore = ["D105", "D107"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["canet", "config", "data", "evaluation", "forecasting", "utils"]
+
+[tool.ruff.lint.per-file-ignores]
+# Derived from Amazon GluonTS (Apache 2.0) — do not enforce project docstring style on it.
+"data/timefeatures.py" = ["D", "ANN", "E402", "E501"]
+# deprecated/ directory is not maintained — exclude from all checks.
+"deprecated/**" = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

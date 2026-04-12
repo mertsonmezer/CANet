@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Test script for the standalone robustness testing functionality.
+"""Test script for the standalone robustness testing functionality.
 
 This script demonstrates and tests the separated robustness testing script.
 """
@@ -13,8 +12,8 @@ sys.path.append("/home/pc-amax-2/Desktop/Mert/Mert-recovered/Mert/Net_final")
 
 def test_database_finding():
   """Test the database finding functionality."""
-  from forecasting.robustness_test import find_optuna_database, load_best_result_from_database
   from config.net_config import DataConfig, TrainConfig
+  from forecasting.robustness_test import find_optuna_database, load_best_result_from_database
 
   print("Testing Standalone Robustness Script")
   print("=" * 50)

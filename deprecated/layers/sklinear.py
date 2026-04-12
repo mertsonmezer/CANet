@@ -1,4 +1,5 @@
 import math
+
 import torch
 import torch.nn as nn
 
@@ -28,9 +29,7 @@ class SKLinear(nn.Module):
 
     r = int(scale * (n * m) / 2.0 / k + 0.5)
 
-    print(
-      f"Using SKLinear: n={n} m={m} r={r} round_sqrt(n)={self.sn} round_sqrt(m)={self.sm} n'={self.np} m'={self.mp} k={k} reduction={(2 * r * k) * 100.0 / (n * m)}%"
-    )
+    print(f"Using SKLinear: n={n} m={m} r={r} round_sqrt(n)={self.sn} round_sqrt(m)={self.sm} n'={self.np} m'={self.mp} k={k} reduction={(2 * r * k) * 100.0 / (n * m)}%")
 
     # Initialize A and B using Kaiming initialization
     self.A = nn.Parameter(torch.empty(k, r))
@@ -43,9 +42,7 @@ class SKLinear(nn.Module):
     if x.size(-1) != self.n:
       raise ValueError("Input vector must have size n")
 
-    S = (
-      torch.matmul(self.A, self.B).reshape(self.sn, self.sm, self.sn, self.sm).transpose(1, 2).reshape(self.np, self.mp)
-    )
+    S = torch.matmul(self.A, self.B).reshape(self.sn, self.sm, self.sn, self.sm).transpose(1, 2).reshape(self.np, self.mp)
     S_truncated = S[: self.n, : self.m]
 
     return torch.matmul(x, S_truncated)

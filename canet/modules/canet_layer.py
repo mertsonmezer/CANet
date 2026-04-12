@@ -1,3 +1,7 @@
+"""Single CANet layer combining patching, normalization, and convolution."""
+
+import logging
+
 import lightning as L
 import torch.nn as nn
 from einops import rearrange
@@ -12,9 +16,60 @@ from canet.modules.patchifier import Patchifier
 from canet.modules.positional_encoding import create_positional_encoding
 from config.canet_config import CANetTrainConfig
 
+logger = logging.getLogger(__name__)
+
+
+def _build_norm_layer(norm_type: str, embed_dim: int, num_patches: int) -> nn.Module:
+  """Instantiate a normalization layer by name.
+
+  Args:
+    norm_type: One of ``"nsan"``, ``"layer"``, ``"batch"``, ``"instance"``,
+      ``"dain"``.
+    embed_dim: Feature dimension for LayerNorm.
+    num_patches: Sequence length used by BatchNorm1d, InstanceNorm1d, and DAIN.
+
+  Returns:
+    The corresponding ``nn.Module`` normalization layer.
+
+  Raises:
+    ValueError: If ``norm_type`` is not one of the supported values.
+  """
+  if norm_type == "nsan":
+    return AdaIN()
+  if norm_type == "layer":
+    return nn.LayerNorm(embed_dim)
+  if norm_type == "batch":
+    return nn.BatchNorm1d(num_patches)
+  if norm_type == "instance":
+    return nn.InstanceNorm1d(num_patches)
+  if norm_type == "dain":
+    return DAIN(mode="full", input_dim=num_patches)
+  raise ValueError(f"Unknown norm_type: {norm_type!r}")
+
 
 class CANetLayer(L.LightningModule):
-  def __init__(self, patch_size: int, config: CANetTrainConfig, mlp_ratio: float = 3.0, drop_path_ratio: float = 0.0):
+  """Single processing block of CANet.
+
+  Converts an input sequence to overlapping patches, applies a learned
+  positional encoding, projects to an embedding space, runs
+  AdaptiveSpectralBlock for frequency filtering, applies a configurable
+  normalization layer, then InteractiveConvolutionalBlock with a residual
+  drop-path connection.
+
+  Args:
+    patch_size: Length of each temporal patch.
+    config: CANetTrainConfig with embedding, normalization, and dropout settings.
+    mlp_ratio: Hidden-dim multiplier for the ICB; default 3.0.
+    drop_path_ratio: Stochastic depth drop probability; default 0.0.
+  """
+
+  def __init__(
+    self,
+    patch_size: int,
+    config: CANetTrainConfig,
+    mlp_ratio: float = 3.0,
+    drop_path_ratio: float = 0.0,
+  ) -> None:
     super().__init__()
     self.patch_size: int = patch_size
     self.mlp_ratio: float = mlp_ratio
@@ -42,29 +97,12 @@ class CANetLayer(L.LightningModule):
         self.config.embed_dim, self.config.blend_ratio, self.config.style_blend_gate_affine
       )
 
-    # First Normalization Layer
-    if self.config.first_norm_layer == "nsan":
-      self.norm_layer1 = AdaIN()
-    elif self.config.first_norm_layer == "layer":
-      self.norm_layer1 = nn.LayerNorm(self.config.embed_dim)
-    elif self.config.first_norm_layer == "batch":
-      self.norm_layer1 = nn.BatchNorm1d(self.patchifier.num_patches)
-    elif self.config.first_norm_layer == "instance":
-      self.norm_layer1 = nn.InstanceNorm1d(self.patchifier.num_patches)
-    elif self.config.first_norm_layer == "dain":
-      self.norm_layer1 = DAIN(mode="full", input_dim=self.patchifier.num_patches)
-
-    # Second Normalization Layer
-    if self.config.second_norm_layer == "nsan":
-      self.norm_layer2 = AdaIN()
-    elif self.config.second_norm_layer == "layer":
-      self.norm_layer2 = nn.LayerNorm(self.config.embed_dim)
-    elif self.config.second_norm_layer == "batch":
-      self.norm_layer2 = nn.BatchNorm1d(self.patchifier.num_patches)
-    elif self.config.second_norm_layer == "instance":
-      self.norm_layer2 = nn.InstanceNorm1d(self.patchifier.num_patches)
-    elif self.config.second_norm_layer == "dain":
-      self.norm_layer2 = DAIN(mode="full", input_dim=self.patchifier.num_patches)
+    self.norm_layer1 = _build_norm_layer(
+      self.config.first_norm_layer, self.config.embed_dim, self.patchifier.num_patches
+    )
+    self.norm_layer2 = _build_norm_layer(
+      self.config.second_norm_layer, self.config.embed_dim, self.patchifier.num_patches
+    )
 
     self.asb = AdaptiveSpectralBlock(self.config.embed_dim)
 
@@ -78,6 +116,16 @@ class CANetLayer(L.LightningModule):
     )
 
   def forward(self, x: Tensor, mean: Tensor, std: Tensor) -> Tensor:
+    """Process a sequence through patching, spectral filtering, and ICB.
+
+    Args:
+      x: Input of shape ``(B, seq_len, M)``.
+      mean: Per-sequence mean of shape ``(B, 1, M)`` for NSAN style injection.
+      std: Per-sequence std of shape ``(B, 1, M)`` for NSAN style injection.
+
+    Returns:
+      Output patch embeddings of shape ``(B*M, num_patches, embed_dim)``.
+    """
     x = rearrange(x, "b l m -> b m l")
 
     # Patching + Positional Encoding
@@ -121,7 +169,8 @@ class CANetLayer(L.LightningModule):
     return out
 
 
-def demo():
+def demo() -> None:
+  """Demonstrate CANetLayer forward pass with a random batch."""
   import torch
 
   # Define dummy config
@@ -141,14 +190,16 @@ def demo():
   canet_layer = CANetLayer(patch_size, config)
 
   # Generate dummy inputs
-  input: Tensor = torch.randn(config.batch_size, config.seq_len, config.data_config.num_channels)  # Input sequence
+  input: Tensor = torch.randn(
+    config.batch_size, config.seq_len, config.data_config.num_channels
+  )  # Input sequence
   mean: Tensor = input.mean(dim=1, keepdim=True)  # Mean tensor
   std: Tensor = input.std(dim=1, keepdim=True)  # Std tensor
 
   output: Tensor = canet_layer(input, mean, std)
 
-  print(f"Input shape: {input.shape}")
-  print(f"Output shape: {output.shape}")
+  logger.info("Input shape: %s", input.shape)
+  logger.info("Output shape: %s", output.shape)
 
 
 if __name__ == "__main__":

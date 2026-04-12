@@ -1,6 +1,15 @@
-from data.data_loader import Dataset_ETT_hour, Dataset_ETT_minute, Dataset_Custom
-from torch.utils.data import DataLoader
+"""Factory function for constructing dataset and DataLoader pairs."""
+
+from __future__ import annotations
+
+import logging
+
+from torch.utils.data import DataLoader, Dataset
+
 from config.canet_config import CANetTrainConfig
+from data.data_loader import Dataset_Custom, Dataset_ETT_hour, Dataset_ETT_minute
+
+logger = logging.getLogger(__name__)
 
 data_dict = {
   "ETTh1": Dataset_ETT_hour,
@@ -11,7 +20,17 @@ data_dict = {
 }
 
 
-def data_provider(config: CANetTrainConfig, flag: str):
+def data_provider(config: CANetTrainConfig, flag: str) -> tuple[Dataset, DataLoader]:
+  """Instantiate the appropriate dataset and wrap it in a DataLoader.
+
+  Args:
+    config: Full training configuration (uses ``data_config`` and batch/seq
+      settings).
+    flag: Split to load — ``"train"``, ``"val"``, or ``"test"``.
+
+  Returns:
+    A ``(dataset, dataloader)`` pair ready for Lightning training.
+  """
   Data = data_dict[config.data_config.data_name]
   timeenc = 0 if config.data_config.embed != "timeF" else 1
 
@@ -26,33 +45,23 @@ def data_provider(config: CANetTrainConfig, flag: str):
     batch_size = config.batch_size  # bsz for train and valid
     freq = config.data_config.freq
 
-  # print("=====================", args.data)
-  if "ETT" in config.data_config.data_name:
-    data_set = Data(
-      root_path=config.data_config.root_dir_path,
-      data_path=config.data_config.data_path,
-      flag=flag,
-      size=[config.seq_len, config.label_len, config.pred_len],
-      features=config.data_config.features,
-      target=config.data_config.target,
-      timeenc=timeenc,
-      freq=freq,
-    )
-    print(flag, len(data_set))
-    data_loader = DataLoader(data_set, batch_size=batch_size, shuffle=shuffle_flag, drop_last=drop_last)
-  else:
-    data_set = Data(
-      root_path=config.data_config.root_dir_path,
-      data_path=config.data_config.data_path,
-      flag=flag,
-      size=[config.seq_len, config.label_len, config.pred_len],
-      features=config.data_config.features,
-      target=config.data_config.target,
-      timeenc=timeenc,
-      freq=freq,
-      seasonal_patterns=config.data_config.seasonal_patterns,
-    )
-    print(flag, len(data_set))
-    data_loader = DataLoader(data_set, batch_size=batch_size, shuffle=shuffle_flag, drop_last=drop_last)
+  kwargs = dict(
+    root_path=config.data_config.root_dir_path,
+    data_path=config.data_config.data_path,
+    flag=flag,
+    size=[config.seq_len, config.label_len, config.pred_len],
+    features=config.data_config.features,
+    target=config.data_config.target,
+    timeenc=timeenc,
+    freq=freq,
+  )
+  if "ETT" not in config.data_config.data_name:
+    kwargs["seasonal_patterns"] = config.data_config.seasonal_patterns
+
+  data_set = Data(**kwargs)
+  logger.info("%s dataset size: %d", flag, len(data_set))
+  data_loader = DataLoader(
+    data_set, batch_size=batch_size, shuffle=shuffle_flag, drop_last=drop_last
+  )
 
   return data_set, data_loader

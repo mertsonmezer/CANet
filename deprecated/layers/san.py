@@ -1,7 +1,7 @@
+import copy
+
 import torch
 import torch.nn as nn
-import copy
-from torch.nn.init import xavier_normal_, constant_
 
 
 class Statistics_prediction(nn.Module):

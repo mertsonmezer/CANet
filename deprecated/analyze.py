@@ -1,8 +1,9 @@
-import optuna
+import argparse
+
 import numpy as np
+import optuna
 import scipy.stats as stats
 from optuna.visualization import plot_slice
-import argparse
 
 # Set up argument parser
 parser = argparse.ArgumentParser(description="Analyze Optuna study results.")
@@ -23,7 +24,7 @@ study = optuna.create_study(study_name=study_name, storage=storage, load_if_exis
 # Visualization of the best trial
 best_trial = study.best_trial
 print(f"Best Trial is {best_trial._trial_id} with the value {best_trial.value}")
-print(f"Params:")
+print("Params:")
 print(best_trial.params)
 
 # Plot slice visualization if the show_plot flag is set

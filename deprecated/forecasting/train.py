@@ -1,7 +1,7 @@
 import argparse
 import datetime
 import os
-from typing import Any, Dict
+from typing import Any
 
 import lightning as L
 import pandas as pd
@@ -25,7 +25,7 @@ def train_model(
   test_dataloader: DataLoader[torch.dtype],
   checkpoint_dir_path: str,
   checkpoint_callback: ModelCheckpoint,
-) -> tuple[Any, Dict[str, float], Dict[str, float]]:
+) -> tuple[Any, dict[str, float], dict[str, float]]:
   trainer = L.Trainer(
     default_root_dir=checkpoint_dir_path,
     accelerator="auto",
@@ -55,8 +55,8 @@ def train_model(
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)
   test_result = trainer.test(model, dataloaders=test_dataloader, verbose=False)
 
-  mse_result: Dict[str, float] = {"test": test_result[0]["test_mse"], "val": val_result[0]["test_mse"]}
-  mae_result: Dict[str, float] = {"test": test_result[0]["test_mae"], "val": val_result[0]["test_mae"]}
+  mse_result: dict[str, float] = {"test": test_result[0]["test_mse"], "val": val_result[0]["test_mse"]}
+  mae_result: dict[str, float] = {"test": test_result[0]["test_mae"], "val": val_result[0]["test_mae"]}
 
   return model, mse_result, mae_result
 

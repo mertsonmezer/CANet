@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Test script for the enhanced robustness testing functionality.
+"""Test script for the enhanced robustness testing functionality.
 
 This script demonstrates:
 1. Automatic database loading to find the best MSE
@@ -20,8 +19,8 @@ sys.path.append("/home/pc-amax-2/Desktop/Mert/Mert-recovered/Mert/Net_final")
 
 def test_database_finding():
   """Test the database finding functionality."""
-  from forecasting.train_tune_gpu0 import find_optuna_database, load_best_result_from_database
   from config.net_config import DataConfig, TrainConfig
+  from forecasting.train_tune_gpu0 import find_optuna_database, load_best_result_from_database
 
   print("Testing Database Finding Functionality")
   print("=" * 50)
@@ -64,7 +63,7 @@ def test_database_finding():
     result = load_best_result_from_database(db_path)
     if result:
       best_mse, best_mae, hyperparams = result
-      print(f"✓ Successfully loaded best result:")
+      print("✓ Successfully loaded best result:")
       print(f"  - Best MSE: {best_mse:.6f}")
       print(f"  - Best MAE: {best_mae:.6f}")
       print(f"  - Hyperparameters: {hyperparams}")
@@ -79,9 +78,10 @@ def test_database_finding():
 
 def test_robustness_functions():
   """Test the robustness testing functions without actual training."""
-  from forecasting.train_tune_gpu0 import save_robustness_results
-  from config.net_config import DataConfig, TrainConfig
   import pandas as pd
+
+  from config.net_config import DataConfig, TrainConfig
+  from forecasting.train_tune_gpu0 import save_robustness_results
 
   print("\nTesting Robustness Functions")
   print("=" * 50)
