@@ -2,8 +2,10 @@
 
 import argparse
 import datetime
+import json
 import logging
 import os
+from dataclasses import asdict
 from typing import Any
 
 import lightning as L
@@ -19,6 +21,7 @@ from torch.utils.data import DataLoader
 from canet.canet import TrainedCANet
 from config.canet_config import CANetDataConfig, CANetTrainConfig
 from data.data_factory import data_provider
+from utils.paths import TrainPaths
 
 logger = logging.getLogger(__name__)
 
@@ -222,9 +225,10 @@ def main() -> None:
     seed=args.seed,
   )
 
-  # Generate run ID for logging and checkpointing
+  # Generate run ID for logging and checkpointing.
+  # The dataset name is encoded in the parent path, so it is omitted here
+  # to keep the leaf directory name concise.
   run_description: str = (
-    f"{data_config.data_name}-"
     f"Embed{train_config.embed_dim}-"
     f"Depth{train_config.depth}-"
     f"{'MP' + '-'.join(map(str, train_config.patch_sizes))}-"
@@ -232,12 +236,14 @@ def main() -> None:
     f"Batch{train_config.batch_size}-"
     f"FirstNorm{train_config.first_norm_layer}-"
     f"SecondNorm{train_config.second_norm_layer}-"
-    f"RankReduction{train_config.use_rank_reduction}"
+    f"RankReduction{train_config.use_rank_reduction}-"
     f"{datetime.datetime.now().strftime('%Y_%m_%d-%H_%M_%S')}"
   )
-  logger.info("========== %s ===========", run_description)
+  train_paths = TrainPaths(dataset=data_config.data_name, run_description=run_description)
+  train_paths.run_dir.mkdir(parents=True, exist_ok=True)
+  logger.info("========== %s ===========", train_paths.run_dir)
 
-  checkpoint_dir_path: str = f"logs/{run_description}"
+  checkpoint_dir_path: str = str(train_paths.run_dir)
   checkpoint_callback = ModelCheckpoint(
     dirpath=checkpoint_dir_path,
     save_top_k=1,
@@ -257,7 +263,7 @@ def main() -> None:
   _, test_dataloader = data_provider(train_config, flag="test")
 
   # Execute the training model function
-  _, mse_result, mae_result = train_model(
+  model, mse_result, mae_result = train_model(
     train_config,
     train_dataloader,
     val_dataloader,
@@ -268,14 +274,13 @@ def main() -> None:
   logger.info("MSE results: %s", mse_result)
   logger.info("MAE results: %s", mae_result)
 
-  # Save results into an Excel sheet
+  # Save results and configuration
   df = pd.DataFrame({"MSE": mse_result, "MAE": mae_result})
-  df.to_excel(
-    os.path.join(
-      checkpoint_dir_path,
-      "results.xlsx",
-    )
-  )
+  df.to_excel(train_paths.run_dir / "results.xlsx")
+
+  total_params: int = sum(p.numel() for p in model.parameters() if p.requires_grad)
+  with open(train_paths.run_dir / "config.json", "w", encoding="utf-8") as f:
+    json.dump({"total_params": total_params, "config": asdict(train_config)}, f, indent=2)
 
 
 if __name__ == "__main__":
