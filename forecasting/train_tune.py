@@ -388,7 +388,7 @@ def main() -> None:
   if best_src.exists():
     if tune_paths.best_dir.exists():
       shutil.rmtree(tune_paths.best_dir)
-    shutil.copytree(best_src, tune_paths.best_dir)
+    shutil.move(str(best_src), tune_paths.best_dir)
     logger.info("Best trial artifacts promoted to %s", tune_paths.best_dir)
 
   logger.info("Study statistics:")
