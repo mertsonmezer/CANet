@@ -2,7 +2,7 @@ for pred_len in 96 192 336 720
 do
   uv run python -m forecasting.train_tune \
     --data_name "Traffic" \
-    --root_path "Traffic/" \
+    --root_path "datasets/Traffic/" \
     --data_path "traffic.csv" \
     --num_channels 862 \
     --embed_dims 32 64 128 \

@@ -2,7 +2,7 @@ for pred_len in 96 192 336 720
 do
   uv run python -m forecasting.train_tune \
     --data_name "Weather" \
-    --root_path "Weather/" \
+    --root_path "datasets/Weather/" \
     --data_path "weather.csv" \
     --num_channels 21 \
     --embed_dims 32 64 128 \
