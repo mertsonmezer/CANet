@@ -20,7 +20,7 @@
 <p align="center"><i>Figure: CANet's architecture tackles the challenge of non-stationarity in time series data</i></p>
 
 ## 🌟 Why CANet?
-Real-world time series data is messy. Distribution shifts, temporal changes in statistical properties, and non-stationarity plague traditional forecasting models. While existing approaches struggle with these challenges, CANet thrives. CANet achieves breakthrough performance by:
+Real-world time series data is messy. Distribution shifts, temporal changes in statistical properties, and non-stationarity plague traditional forecasting models. While existing approaches struggle with these challenges, CANet thrives. CANet achieves performance by:
 
 * 🔄 Preserving non-stationarity through our innovative Style Blending Gate
 * 🔍 Dynamically adapting to statistical changes with AdaIN
@@ -29,7 +29,7 @@ Real-world time series data is messy. Distribution shifts, temporal changes in s
 * ⚡ Optimizing efficiency with Stacked Kronecker Product Layer
 
 ## 📈 Impressive Results
-Extensive experiments on real-world datasets demonstrate CANet's superiority:
+Experiments on real-world datasets demonstrate CANet's superiority:
 
 * 42% reduction in Mean Squared Error (MSE)
 * 22% reduction in Mean Absolute Error (MAE)
@@ -104,8 +104,6 @@ datasets/
 └── Weather/         # weather.csv
 ```
 
-> **Note on `--root_path`:** experiment scripts pass this path relative to the working directory (repo root). ETT/Electricity/Exchange/Traffic/Weather scripts use bare subdirectory names (e.g., `ETT-small/`); the ILI script uses the full `datasets/ILI/` prefix. Ensure your data layout matches these paths before running.
-
 ## 🧪 Experiments
 
 <p align="center">
@@ -140,7 +138,7 @@ Train with the best hyperparameters found by a completed tuning study:
 ```bash
 uv run python -m forecasting.train \
   --data_name ETTh1 \
-  --root_path ETT-small/ \
+  --root_path datasets/ETT-small/ \
   --data_path ETTh1.csv \
   --num_channels 7 \
   --seq_len 96 --pred_len 96 \
@@ -184,6 +182,8 @@ If you have any questions or concerns, feel free to reach out:
 
 📧 **Email:** [mert.sonmezer@metu.edu.tr](mailto:mert.sonmezer@metu.edu.tr)
 🐛 **Issues:** [Submit an issue](https://github.com/mertsonmezer/CANet/issues)
+
+<a id="citation"></a>
 
 ## 📖 Citation
 If you found this work useful, please consider citing it:

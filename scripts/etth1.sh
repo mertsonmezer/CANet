@@ -2,7 +2,7 @@ for pred_len in 96 192 336 720
 do
   uv run python -m forecasting.train_tune \
     --data_name "ETTh1" \
-    --root_path "ETT-small/" \
+    --root_path "datasets/ETT-small/" \
     --data_path "ETTh1.csv" \
     --num_channels 7 \
     --embed_dims 32 64 128 \
