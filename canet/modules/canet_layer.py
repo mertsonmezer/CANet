@@ -19,6 +19,34 @@ from config.canet_config import CANetTrainConfig
 logger = logging.getLogger(__name__)
 
 
+def _build_norm_layer(norm_type: str, embed_dim: int, num_patches: int) -> nn.Module:
+  """Instantiate a normalization layer by name.
+
+  Args:
+    norm_type: One of ``"nsan"``, ``"layer"``, ``"batch"``, ``"instance"``,
+      ``"dain"``.
+    embed_dim: Feature dimension for LayerNorm.
+    num_patches: Sequence length used by BatchNorm1d, InstanceNorm1d, and DAIN.
+
+  Returns:
+    The corresponding ``nn.Module`` normalization layer.
+
+  Raises:
+    ValueError: If ``norm_type`` is not one of the supported values.
+  """
+  if norm_type == "nsan":
+    return AdaIN()
+  if norm_type == "layer":
+    return nn.LayerNorm(embed_dim)
+  if norm_type == "batch":
+    return nn.BatchNorm1d(num_patches)
+  if norm_type == "instance":
+    return nn.InstanceNorm1d(num_patches)
+  if norm_type == "dain":
+    return DAIN(mode="full", input_dim=num_patches)
+  raise ValueError(f"Unknown norm_type: {norm_type!r}")
+
+
 class CANetLayer(L.LightningModule):
   """Single processing block of CANet.
 
@@ -69,29 +97,12 @@ class CANetLayer(L.LightningModule):
         self.config.embed_dim, self.config.blend_ratio, self.config.style_blend_gate_affine
       )
 
-    # First Normalization Layer
-    if self.config.first_norm_layer == "nsan":
-      self.norm_layer1 = AdaIN()
-    elif self.config.first_norm_layer == "layer":
-      self.norm_layer1 = nn.LayerNorm(self.config.embed_dim)
-    elif self.config.first_norm_layer == "batch":
-      self.norm_layer1 = nn.BatchNorm1d(self.patchifier.num_patches)
-    elif self.config.first_norm_layer == "instance":
-      self.norm_layer1 = nn.InstanceNorm1d(self.patchifier.num_patches)
-    elif self.config.first_norm_layer == "dain":
-      self.norm_layer1 = DAIN(mode="full", input_dim=self.patchifier.num_patches)
-
-    # Second Normalization Layer
-    if self.config.second_norm_layer == "nsan":
-      self.norm_layer2 = AdaIN()
-    elif self.config.second_norm_layer == "layer":
-      self.norm_layer2 = nn.LayerNorm(self.config.embed_dim)
-    elif self.config.second_norm_layer == "batch":
-      self.norm_layer2 = nn.BatchNorm1d(self.patchifier.num_patches)
-    elif self.config.second_norm_layer == "instance":
-      self.norm_layer2 = nn.InstanceNorm1d(self.patchifier.num_patches)
-    elif self.config.second_norm_layer == "dain":
-      self.norm_layer2 = DAIN(mode="full", input_dim=self.patchifier.num_patches)
+    self.norm_layer1 = _build_norm_layer(
+      self.config.first_norm_layer, self.config.embed_dim, self.patchifier.num_patches
+    )
+    self.norm_layer2 = _build_norm_layer(
+      self.config.second_norm_layer, self.config.embed_dim, self.patchifier.num_patches
+    )
 
     self.asb = AdaptiveSpectralBlock(self.config.embed_dim)
 
