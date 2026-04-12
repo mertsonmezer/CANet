@@ -40,6 +40,7 @@ class StyleBlendingGate(L.LightningModule):
   def forward(
     self, mean_style1: Tensor, std_style1: Tensor, mean_style2: Tensor, std_style2: Tensor
   ) -> tuple[Tensor, Tensor]:
+    """Blend two style statistics and project to the embedding dimension."""
     if self.affine:
       mean_style1 = mean_style1 * self.mean_shift_style1
       mean_style2 = mean_style2 * self.mean_shift_style2
@@ -78,6 +79,7 @@ class MeanStdProjector(L.LightningModule):
     self.std_drop = nn.Dropout(dropout_rate)
 
   def forward(self, mean: Tensor, std: Tensor) -> tuple[Tensor, Tensor]:
+    """Project per-channel mean and std statistics into embedding space."""
     mean = rearrange(mean, "b l m -> b m l")
     std = rearrange(std, "b l m -> b m l")
 
@@ -113,6 +115,7 @@ class AdaIN(L.LightningModule):
     self.eps = _ADAIN_EPS
 
   def forward(self, x: Tensor, style_mean: Tensor, style_std: Tensor) -> Tensor:
+    """Normalize x and rescale with provided style statistics."""
     mean_x: Tensor = torch.mean(x, dim=1, keepdim=True).detach()
 
     std_x: Tensor = torch.std(x, dim=1, keepdim=True).detach()

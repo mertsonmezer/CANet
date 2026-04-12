@@ -4,7 +4,6 @@ import os
 import shutil
 from dataclasses import asdict
 from functools import partial
-from typing import Dict, List
 
 import lightning as L
 import optuna
@@ -26,9 +25,9 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Define ranges for hyperparameter tuning
 LOW_LR, HIGH_LR = 1e-4, 1e-2
 LOW_DROPOUT, HIGH_DROPOUT = 0.3, 0.5
-BATCH_SIZES: List[int] = [16]
-PATCH_SIZES: List[List[int]] = [[8, 48]]
-EMBED_DIMS: List[int] = [64]
+BATCH_SIZES: list[int] = [16]
+PATCH_SIZES: list[list[int]] = [[8, 48]]
+EMBED_DIMS: list[int] = [64]
 
 
 def clean_trial_logs(study: optuna.Study, config: TrainConfig, logs_dir: str):
@@ -51,7 +50,7 @@ def train_model(
   test_dataloader: DataLoader[torch.dtype],
   checkpoint_dir_path: str,
   checkpoint_callback: ModelCheckpoint,
-) -> tuple[TrainedNet, Dict[str, float], Dict[str, float]]:
+) -> tuple[TrainedNet, dict[str, float], dict[str, float]]:
   trainer = L.Trainer(
     default_root_dir=checkpoint_dir_path,
     accelerator="auto",
@@ -81,8 +80,8 @@ def train_model(
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)
   test_result = trainer.test(model, dataloaders=test_dataloader, verbose=False)
 
-  mse_result: Dict[str, float] = {"test": test_result[0]["test_mse"], "val": val_result[0]["test_mse"]}
-  mae_result: Dict[str, float] = {"test": test_result[0]["test_mae"], "val": val_result[0]["test_mae"]}
+  mse_result: dict[str, float] = {"test": test_result[0]["test_mse"], "val": val_result[0]["test_mse"]}
+  mae_result: dict[str, float] = {"test": test_result[0]["test_mae"], "val": val_result[0]["test_mae"]}
 
   return model, mse_result, mae_result
 
@@ -216,8 +215,8 @@ def main():
   )
 
   # Output study statistics and results
-  pruned_trials: List[FrozenTrial] = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
-  complete_trials: List[FrozenTrial] = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+  pruned_trials: list[FrozenTrial] = [t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED]
+  complete_trials: list[FrozenTrial] = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
 
   # Clean up all non-best trial directories
   clean_trial_logs(study, train_config, "logs")

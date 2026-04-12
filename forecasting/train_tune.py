@@ -8,7 +8,6 @@ import os
 import shutil
 from dataclasses import asdict
 from functools import partial
-from typing import Dict, List
 
 import lightning as L
 import optuna
@@ -26,14 +25,12 @@ from torch.utils.data import DataLoader
 from canet.canet import TrainedCANet
 from config.canet_config import CANetDataConfig, CANetTrainConfig
 from data.data_factory import data_provider
-from utils.utils import DEVICE
 
 logger = logging.getLogger(__name__)
 
 
-def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: str):
-  """
-  Cleans up non-best trial directories from the log directory.
+def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: str) -> None:
+  """Cleans up non-best trial directories from the log directory.
 
   This function removes the directories of trials that did not yield the best results.
 
@@ -42,7 +39,6 @@ def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: st
     config: Configuration object containing training settings.
     logs_dir: The directory where trial logs are stored.
   """
-
   best_trial_number: int = study.best_trial.number
   logger.info("Best trial is %d, cleaning up non-best trial directories.", best_trial_number)
 
@@ -68,9 +64,8 @@ def train_model(
   test_dataloader: DataLoader,
   checkpoint_dir: str,
   checkpoint_callback: ModelCheckpoint,
-) -> tuple[TrainedCANet, Dict[str, float], Dict[str, float]]:
-  """
-  Trains the CANet model and evaluates on validation and test sets.
+) -> tuple[TrainedCANet, dict[str, float], dict[str, float]]:
+  """Trains the CANet model and evaluates on validation and test sets.
 
   Args:
     config: Training configuration.
@@ -114,11 +109,11 @@ def train_model(
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)
   test_result = trainer.test(model, dataloaders=test_dataloader, verbose=False)
 
-  mse_result: Dict[str, float] = {
+  mse_result: dict[str, float] = {
     "test": test_result[0]["test_mse"],
     "val": val_result[0]["test_mse"],
   }
-  mae_result: Dict[str, float] = {
+  mae_result: dict[str, float] = {
     "test": test_result[0]["test_mae"],
     "val": val_result[0]["test_mae"],
   }
@@ -129,15 +124,14 @@ def train_model(
 def objective(
   trial: optuna.trial.Trial, args: argparse.Namespace, config: CANetTrainConfig
 ) -> float:
-  """
-  Objective function for Optuna hyperparameter tuning.
+  """Objective function for Optuna hyperparameter tuning.
 
-  This function is used by Optuna to suggest hyperparameters and train the model. It evaluates the model
-  using the Mean Squared Error (MSE) on the validation set, which is returned as the objective value.
+  Suggests hyperparameters, trains the model, and returns the MSE on the
+  test set as the objective value to minimize.
 
   Args:
     trial: An Optuna trial instance used for suggesting hyperparameter values.
-    args: ...
+    args: Parsed CLI arguments with hyperparameter search ranges.
     config: A configuration object containing model and training parameters.
 
   Returns:
@@ -200,7 +194,8 @@ def objective(
   return mse_result["test"]
 
 
-def main():
+def main() -> None:
+  """Entry point — parse arguments and run the main workflow."""
   parser = argparse.ArgumentParser()
 
   # Data Configuration
@@ -233,7 +228,9 @@ def main():
     "--freq",
     type=str,
     default="h",
-    help="Frequency for time features encoding (e.g., s (secondly), t (minutely), h (hourly), d (daily), b (business days), w (weekly), m (monthly)).",
+    help="Frequency for time features encoding "
+    "(e.g., s (secondly), t (minutely), h (hourly), d (daily), "
+    "b (business days), w (weekly), m (monthly)).",
   )
   parser.add_argument("--num_channels", type=int, default=7, help="Number of data channels.")
   # parser.add_argument("--seasonal_patterns", type=str, default="Monthly", help="Subset for M4.")
@@ -308,7 +305,10 @@ def main():
 
   args: argparse.Namespace = parser.parse_args()
 
-  logging.basicConfig(level=logging.INFO, format="%(asctime)s — %(name)s — %(levelname)s — %(message)s")
+  logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
+  )
 
   try:
     args.patch_sizes = ast.literal_eval(args.patch_sizes)
@@ -351,7 +351,14 @@ def main():
 
   sampler = TPESampler(seed=train_config.seed)
 
-  study_name: str = f"{train_config.data_config.data_name}-SeqLen{train_config.seq_len}-PredLen{train_config.pred_len}-FirstNorm{train_config.first_norm_layer}-SecondNorm{train_config.second_norm_layer}-RankReduction{train_config.use_rank_reduction}"
+  study_name: str = (
+    f"{train_config.data_config.data_name}"
+    f"-SeqLen{train_config.seq_len}"
+    f"-PredLen{train_config.pred_len}"
+    f"-FirstNorm{train_config.first_norm_layer}"
+    f"-SecondNorm{train_config.second_norm_layer}"
+    f"-RankReduction{train_config.use_rank_reduction}"
+  )
   storage: str = f"sqlite:///{study_name}.db"
 
   study: optuna.Study = optuna.create_study(
@@ -368,10 +375,10 @@ def main():
   )
 
   # Output study statistics and results
-  pruned_trials: List[FrozenTrial] = [
+  pruned_trials: list[FrozenTrial] = [
     t for t in study.trials if t.state == optuna.trial.TrialState.PRUNED
   ]
-  complete_trials: List[FrozenTrial] = [
+  complete_trials: list[FrozenTrial] = [
     t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE
   ]
 

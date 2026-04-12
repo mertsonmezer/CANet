@@ -16,7 +16,6 @@
 
 from datetime import datetime
 from distutils.util import strtobool
-from typing import List
 
 import numpy as np
 import pandas as pd
@@ -91,15 +90,13 @@ class WeekOfYear(TimeFeature):
     return (index.isocalendar().week - 1) / 52.0 - 0.5
 
 
-def time_features_from_frequency_str(freq_str: str) -> List[TimeFeature]:
-  """
-  Returns a list of time features that will be appropriate for the given frequency string.
+def time_features_from_frequency_str(freq_str: str) -> list[TimeFeature]:
+  """Returns a list of time features that will be appropriate for the given frequency string.
   Parameters
   ----------
   freq_str
       Frequency string of the form [multiple][granularity] such as "12H", "5min", "1D" etc.
   """
-
   features_by_offsets = {
     offsets.YearEnd: [],
     offsets.QuarterEnd: [MonthOfYear],
@@ -169,7 +166,7 @@ def convert_tsf_to_dataframe(
   found_data_section = False
   started_reading_data_section = False
 
-  with open(full_file_path_and_name, "r", encoding="cp1252") as file:
+  with open(full_file_path_and_name, encoding="cp1252") as file:
     for line in file:
       # Strip white space from start/end of line
       line = line.strip()

@@ -152,6 +152,7 @@ class _BaseETTDataset(Dataset):
     return len(self.data_x) - self.seq_len - self.pred_len + 1
 
   def inverse_transform(self, data: np.ndarray) -> np.ndarray:
+    """Reverse the StandardScaler transform applied during __read_data__."""
     return self.scaler.inverse_transform(data)
 
 
@@ -373,4 +374,5 @@ class Dataset_Custom(Dataset):
     return len(self.data_x) - self.seq_len - self.pred_len + 1
 
   def inverse_transform(self, data: np.ndarray) -> np.ndarray:
+    """Reverse the StandardScaler transform applied during __read_data__."""
     return self.scaler.inverse_transform(data)

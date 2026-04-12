@@ -20,8 +20,7 @@ logger = logging.getLogger(__name__)
 def perform_inference(
   model: TrainedCANet, dataloader: DataLoader
 ) -> tuple[Tensor, Tensor, Tensor, float, float, float]:
-  """
-  Performs inference on the test dataset and evaluates performance.
+  """Performs inference on the test dataset and evaluates performance.
 
   Args:
     model (TrainedCANet): The trained CANet model.
@@ -86,8 +85,7 @@ def perform_inference(
 
 
 def visualize_results(inputs: Tensor, targets: Tensor, outputs: Tensor, example_id: int) -> None:
-  """
-  Visualizes the input, actual target, and predicted target for a given example.
+  """Visualizes the input, actual target, and predicted target for a given example.
 
   Args:
     inputs (Tensor): Model inputs.
@@ -132,8 +130,12 @@ def visualize_results(inputs: Tensor, targets: Tensor, outputs: Tensor, example_
   plt.show()
 
 
-def main():
-  logging.basicConfig(level=logging.INFO, format="%(asctime)s — %(name)s — %(levelname)s — %(message)s")
+def main() -> None:
+  """Entry point — parse arguments and run the main workflow."""
+  logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
+  )
   parser = argparse.ArgumentParser(description="Inference of CANet model.")
   parser.add_argument(
     "--model_path",

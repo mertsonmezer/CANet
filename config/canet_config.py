@@ -1,14 +1,12 @@
 """Configuration dataclasses for CANet data and training settings."""
 
 from dataclasses import dataclass, field
-from typing import List, Literal
+from typing import Literal
 
 
 @dataclass
 class CANetDataConfig:
-  """
-  Configuration for dataset and data paths.
-  """
+  """Configuration for dataset and data paths."""
 
   data_name: str = field(default="")
   root_dir_path: str = field(default="")
@@ -23,9 +21,7 @@ class CANetDataConfig:
 
 @dataclass
 class CANetTrainConfig:
-  """
-  Configuration for model training and architecture.
-  """
+  """Configuration for model training and architecture."""
 
   # Data configuration
   data_config: CANetDataConfig = field(default_factory=CANetDataConfig)
@@ -38,7 +34,7 @@ class CANetTrainConfig:
   second_norm_layer: Literal["nsan", "layer", "batch", "instance", "dain"] = field(default="nsan")
 
   # Patching configuration
-  patch_sizes: List[int] = field(default_factory=lambda: [8, 64])
+  patch_sizes: list[int] = field(default_factory=lambda: [8, 64])
 
   # Sequence configuration
   seq_len: int = field(default=336)
@@ -61,10 +57,8 @@ class CANetTrainConfig:
   # SKPL configuration
   use_rank_reduction: bool = field(default=True)
 
-  def __post_init__(self):
-    """
-    Validates training configuration constraints after initialization.
-    """
+  def __post_init__(self) -> None:
+    """Validate training configuration constraints after initialization."""
     if len(self.patch_sizes) != self.depth:
       raise ValueError(
         f"Length of patch_sizes ({len(self.patch_sizes)}) must match depth ({self.depth})."

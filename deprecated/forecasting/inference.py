@@ -8,12 +8,9 @@ import os
 import time
 from datetime import datetime
 
-import lightning as L
 import matplotlib.pyplot as plt
-import numpy as np
 import optuna
 import torch
-import torch.nn.functional as F
 from lightning.pytorch.utilities.model_summary import ModelSummary
 from torchmetrics.regression import MeanAbsoluteError, MeanSquaredError
 

@@ -16,8 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_model_size(model: TrainedCANet) -> int:
-  """
-  Calculates the total number of trainable parameters in a CANet model.
+  """Calculates the total number of trainable parameters in a CANet model.
 
   Args:
     model (TrainedCANet): The model whose parameters are counted.
@@ -32,8 +31,7 @@ def calculate_model_size(model: TrainedCANet) -> int:
 def measure_inference_time(
   model: TrainedCANet, dataloader: DataLoader, num_trials: int = 25
 ) -> float:
-  """
-  Measures the average inference time of the model.
+  """Measures the average inference time of the model.
 
   Args:
     model (TrainedCANet): The trained model to be evaluated.
@@ -79,7 +77,8 @@ def measure_inference_time(
   return inference_time_ms
 
 
-def main():
+def main() -> None:
+  """Entry point — parse arguments and run the main workflow."""
   logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",

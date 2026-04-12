@@ -62,6 +62,7 @@ class DAIN(L.LightningModule):
     self.eps = _DAIN_EPS
 
   def forward(self, x: Tensor) -> Tensor:
+    """Normalize input tensor according to the configured mode."""
     if self.mode is None:
       # Nothing to normalize
       return x
@@ -124,6 +125,7 @@ class DAIN(L.LightningModule):
 
 
 def demo() -> None:
+  """Demonstrate DAIN normalization on a random input tensor."""
   mode: str = "full"
   dimension: int = 144
   input: Tensor = torch.randn(10, dimension, 5)

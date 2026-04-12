@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Standalone Robustness Testing Script
+"""Standalone Robustness Testing Script
 
 This script finds the best hyperparameters from an existing optuna database
 and performs robustness testing with multiple seeds for both MSE and MAE metrics.
@@ -18,7 +17,7 @@ import os
 import sys
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent.parent
@@ -40,7 +39,6 @@ from utils.utils import str2bool
 
 def find_optuna_database(config: TrainConfig, results_dir: str = "results", database_path: Optional[str] = None) -> Optional[str]:
   """Find the corresponding optuna database file for the given configuration."""
-
   # If explicit database path is provided, use it
   if database_path and os.path.exists(database_path):
     return database_path
@@ -76,7 +74,7 @@ def find_optuna_database(config: TrainConfig, results_dir: str = "results", data
   return None
 
 
-def load_best_result_from_database(db_path: str) -> Optional[Tuple[float, float, Dict[str, Any]]]:
+def load_best_result_from_database(db_path: str) -> Optional[tuple[float, float, dict[str, Any]]]:
   """Load the best result (MSE, MAE, and hyperparameters) from optuna database."""
   try:
     study = optuna.load_study(study_name=None, storage=f"sqlite:///{db_path}")
@@ -115,7 +113,7 @@ def train_model(
   test_dataloader: DataLoader[torch.dtype],
   checkpoint_dir_path: str,
   checkpoint_callback: ModelCheckpoint,
-) -> Tuple[TrainedNet, Dict[str, float], Dict[str, float]]:
+) -> tuple[TrainedNet, dict[str, float], dict[str, float]]:
   """Train a model and return MSE and MAE results."""
   trainer = L.Trainer(
     default_root_dir=checkpoint_dir_path,
@@ -147,13 +145,13 @@ def train_model(
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)
   test_result = trainer.test(model, dataloaders=test_dataloader, verbose=False)
 
-  mse_result: Dict[str, float] = {"test": test_result[0]["test_mse"], "val": val_result[0]["test_mse"]}
-  mae_result: Dict[str, float] = {"test": test_result[0]["test_mae"], "val": val_result[0]["test_mae"]}
+  mse_result: dict[str, float] = {"test": test_result[0]["test_mse"], "val": val_result[0]["test_mse"]}
+  mae_result: dict[str, float] = {"test": test_result[0]["test_mae"], "val": val_result[0]["test_mae"]}
 
   return model, mse_result, mae_result
 
 
-def run_single_training(config: TrainConfig, hyperparams: Dict[str, Any], seed: int, run_suffix: str = "") -> Tuple[Dict[str, float], Dict[str, float]]:
+def run_single_training(config: TrainConfig, hyperparams: dict[str, Any], seed: int, run_suffix: str = "") -> tuple[dict[str, float], dict[str, float]]:
   """Run a single training with specified hyperparameters and seed. Returns (mse_result, mae_result)."""
   # Set hyperparameters
   config.batch_size = hyperparams["batch_size"]
@@ -210,7 +208,7 @@ def run_single_training(config: TrainConfig, hyperparams: Dict[str, Any], seed: 
   return mse_result, mae_result
 
 
-def run_robustness_test(config: TrainConfig, best_hyperparams: Dict[str, Any], seeds: List[int]) -> Tuple[List[Dict[str, float]], List[Dict[str, float]]]:
+def run_robustness_test(config: TrainConfig, best_hyperparams: dict[str, Any], seeds: list[int]) -> tuple[list[dict[str, float]], list[dict[str, float]]]:
   """Run robustness test with multiple seeds and return both MSE and MAE results."""
   mse_results = []
   mae_results = []
@@ -234,7 +232,7 @@ def run_robustness_test(config: TrainConfig, best_hyperparams: Dict[str, Any], s
   return mse_results, mae_results
 
 
-def save_robustness_results(mse_results: List[Dict[str, float]], mae_results: List[Dict[str, float]], config: TrainConfig, best_hyperparams: Dict[str, Any], output_dir: str = "robustness_results") -> str:
+def save_robustness_results(mse_results: list[dict[str, float]], mae_results: list[dict[str, float]], config: TrainConfig, best_hyperparams: dict[str, Any], output_dir: str = "robustness_results") -> str:
   """Save robustness test results to Excel file."""
   os.makedirs(output_dir, exist_ok=True)
 
@@ -266,7 +264,7 @@ def save_robustness_results(mse_results: List[Dict[str, float]], mae_results: Li
   return filepath
 
 
-def print_statistics(mse_results: List[Dict[str, float]], mae_results: List[Dict[str, float]]):
+def print_statistics(mse_results: list[dict[str, float]], mae_results: list[dict[str, float]]):
   """Print comprehensive statistics for MSE and MAE results."""
   # Calculate statistics for MSE
   test_mses = [result["test"] for result in mse_results]
@@ -407,7 +405,7 @@ def main():
   torch.backends.cudnn.deterministic = True
   torch.backends.cudnn.benchmark = False
 
-  print(f"\nStarting robustness testing with best hyperparameters...")
+  print("\nStarting robustness testing with best hyperparameters...")
   print(f"Best MSE from database: {best_mse:.6f}")
 
   # Run robustness test
@@ -419,9 +417,9 @@ def main():
   # Print comprehensive statistics
   print_statistics(mse_results, mae_results)
 
-  print(f"\nRobustness testing completed!")
+  print("\nRobustness testing completed!")
   print(f"Results saved to: {excel_path}")
-  print(f"Individual run logs saved to: logs/")
+  print("Individual run logs saved to: logs/")
 
 
 if __name__ == "__main__":

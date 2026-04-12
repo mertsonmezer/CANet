@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Test script for the standalone robustness testing functionality.
+"""Test script for the standalone robustness testing functionality.
 
 This script demonstrates and tests the separated robustness testing script.
 """

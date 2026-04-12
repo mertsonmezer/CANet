@@ -1,4 +1,3 @@
-from typing import Tuple
 
 import lightning as L
 import torch
@@ -20,7 +19,7 @@ class StyleLinearCombination(nn.Module):
     self.mean_linear = nn.Linear(2 * self.embed_dim, self.embed_dim)
     self.std_linear = nn.Linear(2 * self.embed_dim, self.embed_dim)
 
-  def forward(self, style1_mean: Tensor, style2_mean: Tensor, style1_std: Tensor, style2_std: Tensor) -> Tuple[Tensor, Tensor]:
+  def forward(self, style1_mean: Tensor, style2_mean: Tensor, style1_std: Tensor, style2_std: Tensor) -> tuple[Tensor, Tensor]:
     batch_size: int = style1_mean.size(0)
 
     combined_means: Tensor = torch.cat((style1_mean.view(batch_size, -1), style2_mean.view(batch_size, -1)), dim=1)
@@ -49,7 +48,7 @@ class StyleBlendGate(L.LightningModule):
     self.mean_linear = nn.Linear(self.embed_dim, self.embed_dim)
     self.std_linear = nn.Linear(self.embed_dim, self.embed_dim)
 
-  def forward(self, mean_style1: Tensor, std_style1: Tensor, mean_style2: Tensor, std_style2: Tensor) -> Tuple[Tensor, Tensor]:
+  def forward(self, mean_style1: Tensor, std_style1: Tensor, mean_style2: Tensor, std_style2: Tensor) -> tuple[Tensor, Tensor]:
     if self.affine:
       mean_style1 = mean_style1 * self.mean_shift_style1
       mean_style2 = mean_style2 * self.mean_shift_style2
@@ -77,7 +76,7 @@ class MeanStdProjector(L.LightningModule):
     self.std_proj = nn.Linear(1, self.embed_dim)
     self.std_drop = nn.Dropout(dropout_rate)
 
-  def forward(self, mean: Tensor, std: Tensor) -> Tuple[Tensor, Tensor]:
+  def forward(self, mean: Tensor, std: Tensor) -> tuple[Tensor, Tensor]:
     mean = rearrange(mean, "b l m -> b m l")
     std = rearrange(std, "b l m -> b m l")
 

@@ -23,5 +23,6 @@ class Patchifier(L.LightningModule):
     self.num_patches = int((sequence_length - self.patch_size) / self.stride + 1)
 
   def forward(self, x: Tensor) -> Tensor:
+    """Split the last dimension into overlapping patches with 50% stride."""
     x_patched: Tensor = x.unfold(dimension=-1, size=self.patch_size, step=self.stride)
     return x_patched

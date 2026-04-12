@@ -16,8 +16,7 @@ logger = logging.getLogger(__name__)
 def sin_cos_positional_encoding(
   sequence_length: int, embedding_dim: int, normalize: bool = False
 ) -> torch.Tensor:
-  """
-  Generates a sinusoidal positional encoding matrix.
+  """Generates a sinusoidal positional encoding matrix.
 
   Args:
     sequence_length (int): Length of the input sequence.
@@ -49,8 +48,7 @@ def sin_cos_positional_encoding(
 def coordinate_1d_positional_encoding(
   sequence_length: int, use_exponential: bool = False, normalize: bool = True
 ) -> torch.Tensor:
-  """
-  Generates a 1D coordinate-based positional encoding vector.
+  """Generates a 1D coordinate-based positional encoding vector.
 
   Args:
     sequence_length (int): Length of the input sequence.
@@ -83,8 +81,7 @@ def coordinate_2d_positional_encoding(
   normalize: bool = True,
   tolerance: float = 1e-3,
 ) -> Tensor:
-  """
-  Generates a 2D coordinate-based positional encoding matrix.
+  """Generates a 2D coordinate-based positional encoding matrix.
 
   Args:
     sequence_length (int): Length of the input sequence.
@@ -95,7 +92,8 @@ def coordinate_2d_positional_encoding(
     tolerance (float, optional): Tolerance for the mean value of the encoding. Defaults to 1e-3.
 
   Returns:
-    torch.Tensor: A tensor of shape (sequence_length, embedding_dim) containing 2D positional encodings.
+    torch.Tensor: A tensor of shape ``(sequence_length, embedding_dim)`` containing
+      2D positional encodings.
   """
   scaling_factor: float = 0.5 if use_exponential else 1.0
   coordinate_encoding: Tensor = torch.empty(0)  # Placeholder for the positional encoding
@@ -142,8 +140,7 @@ def create_positional_encoding(
   sequence_length: int,
   embedding_dim: int,
 ) -> Tensor:
-  """
-  Creates various types of positional encodings.
+  """Creates various types of positional encodings.
 
   Args:
     encoding_type (Literal): Type of positional encoding.
@@ -211,6 +208,7 @@ def create_positional_encoding(
 
 
 def demo() -> None:
+  """Demonstrate create_positional_encoding with an exp2d encoding."""
   positional_encoding: Tensor = create_positional_encoding(
     encoding_type="exp2d", learnable=True, sequence_length=384, embedding_dim=64
   )

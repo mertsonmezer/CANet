@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import List
 
 
 @dataclass
@@ -21,7 +20,7 @@ class TrainConfig:
   num_epochs: int = field(default=10)
   batch_size: int = field(default=128)
   patch_size: int = field(default=16)
-  patch_sizes: List[int] = field(default_factory=lambda: [8, 64])
+  patch_sizes: list[int] = field(default_factory=lambda: [8, 64])
   embed_dim: int = field(default=32)
   depth: int = field(default=2)
   output_features: int = field(default=1024)

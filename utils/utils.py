@@ -9,8 +9,7 @@ DEVICE: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cp
 
 
 def round_up_sqrt(value: int) -> int:
-  """
-  Computes the rounded-up integer square root of `value`.
+  """Computes the rounded-up integer square root of `value`.
 
   Args:
     value (int): A non-negative integer.

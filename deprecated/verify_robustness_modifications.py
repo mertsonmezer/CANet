@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Verification script to test the robustness testing functionality.
+"""Verification script to test the robustness testing functionality.
 
 This script performs a dry run to verify that the modifications work correctly
 without actually running the full training process.
@@ -14,7 +13,6 @@ sys.path.append("/home/pc-amax-2/Desktop/Mert/Mert-recovered/Mert/Net_final")
 
 def test_functions():
   """Test the new functions to ensure they work correctly."""
-
   try:
     # Import the modified script functions
     from forecasting.train_tune_gpu0 import BATCH_SIZES, EMBED_DIMS, PATCH_SIZES, check_mse_match
@@ -69,7 +67,6 @@ def test_functions():
 
 def check_file_structure():
   """Check if the necessary files and directories exist."""
-
   required_files = ["forecasting/train_tune_gpu0.py", "config/net_config.py", "data/data_factory.py", "models/net.py", "utils/utils.py"]
 
   print("Checking file structure...")
@@ -84,7 +81,7 @@ def check_file_structure():
   # Check if datasets directory exists
   datasets_dir = "/home/pc-amax-2/Desktop/Mert/Mert-recovered/Mert/Net_final/datasets"
   if os.path.exists(datasets_dir):
-    print(f"✓ datasets/ directory exists")
+    print("✓ datasets/ directory exists")
     # List available datasets
     datasets = [d for d in os.listdir(datasets_dir) if os.path.isdir(os.path.join(datasets_dir, d))]
     print(f"  Available datasets: {datasets}")

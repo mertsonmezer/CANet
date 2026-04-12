@@ -4,7 +4,7 @@ import argparse
 import datetime
 import logging
 import os
-from typing import Any, Dict
+from typing import Any
 
 import lightning as L
 import pandas as pd
@@ -21,7 +21,6 @@ from config.canet_config import CANetDataConfig, CANetTrainConfig
 from data.data_factory import data_provider
 
 logger = logging.getLogger(__name__)
-from utils.utils import DEVICE
 
 
 def train_model(
@@ -31,9 +30,8 @@ def train_model(
   test_dataloader: DataLoader,
   checkpoint_dir: str,
   checkpoint_callback: ModelCheckpoint,
-) -> tuple[Any, Dict[str, float], Dict[str, float]]:
-  """
-  Trains the CANet model and evaluates on validation and test sets.
+) -> tuple[Any, dict[str, float], dict[str, float]]:
+  """Trains the CANet model and evaluates on validation and test sets.
 
   Args:
     config: Training configuration.
@@ -77,11 +75,11 @@ def train_model(
   val_result = trainer.test(model, dataloaders=val_dataloader, verbose=False)
   test_result = trainer.test(model, dataloaders=test_dataloader, verbose=False)
 
-  mse_result: Dict[str, float] = {
+  mse_result: dict[str, float] = {
     "test": test_result[0]["test_mse"],
     "val": val_result[0]["test_mse"],
   }
-  mae_result: Dict[str, float] = {
+  mae_result: dict[str, float] = {
     "test": test_result[0]["test_mae"],
     "val": val_result[0]["test_mae"],
   }
@@ -89,7 +87,8 @@ def train_model(
   return model, mse_result, mae_result
 
 
-def main():
+def main() -> None:
+  """Entry point — parse arguments and run the main workflow."""
   parser = argparse.ArgumentParser()
 
   # Data Configuration
@@ -122,7 +121,9 @@ def main():
     "--freq",
     type=str,
     default="h",
-    help="Frequency for time features encoding (e.g., s (secondly), t (minutely), h (hourly), d (daily), b (business days), w (weekly), m (monthly)).",
+    help="Frequency for time features encoding "
+    "(e.g., s (secondly), t (minutely), h (hourly), d (daily), "
+    "b (business days), w (weekly), m (monthly)).",
   )
   parser.add_argument("--num_channels", type=int, default=7, help="Number of data channels.")
   # parser.add_argument("--seasonal_patterns", type=str, default="Monthly", help="Subset for M4.")
@@ -185,7 +186,10 @@ def main():
 
   args: argparse.Namespace = parser.parse_args()
 
-  logging.basicConfig(level=logging.INFO, format="%(asctime)s — %(name)s — %(levelname)s — %(message)s")
+  logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
+  )
 
   data_config = CANetDataConfig(
     data_name=args.data_name,

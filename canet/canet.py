@@ -197,22 +197,27 @@ class TrainedCANet(L.LightningModule):
     return loss, pred, true
 
   def training_step(self, batch: Tensor, batch_idx: int) -> Tensor:
+    """Compute MSE loss for one training batch."""
     loss, _, _ = self._calculate_loss(batch, mode="train")
     return loss
 
   def validation_step(self, batch: Tensor, batch_idx: int) -> None:
+    """Log MSE/MAE metrics for one validation batch."""
     self._calculate_loss(batch, mode="val")
 
   def test_step(self, batch: Tensor, batch_idx: int) -> dict[str, Tensor]:
+    """Log metrics and collect predictions for one test batch."""
     loss, pred, true = self._calculate_loss(batch, mode="test")
     self.preds.append(pred)
     self.trues.append(true)
     return {"test_loss": loss, "pred": pred, "true": true}
 
-  def on_train_batch_end(self, outputs: Any, batch: Tensor, batch_idx: int) -> None:
+  def on_train_batch_end(self, outputs: object, batch: Tensor, batch_idx: int) -> None:
+    """Clip gradients after each training batch."""
     torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=_GRAD_CLIP_NORM)
 
   def on_test_epoch_end(self) -> None:
+    """Log aggregate MSE and MAE over all test batches."""
     preds: Tensor = torch.cat(self.preds)
     trues: Tensor = torch.cat(self.trues)
 
@@ -225,6 +230,7 @@ class TrainedCANet(L.LightningModule):
 
 
 def demo() -> None:
+  """Demonstrate CANet forward pass with a random input tensor."""
   # Create a dummy configuration
   config = CANetTrainConfig(
     batch_size=128,

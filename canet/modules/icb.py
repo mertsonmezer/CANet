@@ -26,6 +26,7 @@ class InteractiveConvolutionalBlock(L.LightningModule):
     self.act = nn.GELU()
 
   def forward(self, x: Tensor) -> Tensor:
+    """Apply dual-path depthwise convolutions and fuse via element-wise multiplication."""
     x = x.transpose(1, 2)
     x1: Tensor = self.conv1(x)
     x1_1: Tensor = self.act(x1)

@@ -170,6 +170,7 @@ class CANetLayer(L.LightningModule):
 
 
 def demo() -> None:
+  """Demonstrate CANetLayer forward pass with a random batch."""
   import torch
 
   # Define dummy config

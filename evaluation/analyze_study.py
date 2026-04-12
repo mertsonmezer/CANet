@@ -3,7 +3,6 @@
 import argparse
 import logging
 import warnings
-from typing import Tuple
 
 import numpy as np
 import optuna
@@ -18,8 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_filtered_trials(study: optuna.study.Study) -> NDArray[np.float64]:
-  """
-  Filters trials to exclude outliers based on the interquartile range (IQR).
+  """Filters trials to exclude outliers based on the interquartile range (IQR).
 
   Args:
     study (optuna.study.Study): The Optuna study containing the trials.
@@ -47,9 +45,8 @@ def get_filtered_trials(study: optuna.study.Study) -> NDArray[np.float64]:
 
 def calculate_confidence_interval(
   filtered_trials: NDArray[np.float64], confidence_level: float = 0.90
-) -> Tuple[np.float64, np.float64]:
-  """
-  Calculates the confidence interval for the filtered trials.
+) -> tuple[np.float64, np.float64]:
+  """Calculates the confidence interval for the filtered trials.
 
   Args:
     filtered_trials (NDArray[np.float64]): The array of filtered objective values.
@@ -66,7 +63,8 @@ def calculate_confidence_interval(
   )
 
 
-def main():
+def main() -> None:
+  """Entry point — parse arguments and run the main workflow."""
   parser = argparse.ArgumentParser(description="Analyze Optuna study results.")
   parser.add_argument("--study_name", type=str, required=True, help="Name of the Optuna study")
   parser.add_argument(
@@ -97,7 +95,7 @@ def main():
 
   # Filter trials and calculate confidence interval
   filtered_trials: NDArray[np.float64] = get_filtered_trials(study)
-  confidence_interval: Tuple[np.float64, np.float64] = calculate_confidence_interval(
+  confidence_interval: tuple[np.float64, np.float64] = calculate_confidence_interval(
     filtered_trials
   )
 

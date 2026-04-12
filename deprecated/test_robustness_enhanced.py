@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Test script for the enhanced robustness testing functionality.
+"""Test script for the enhanced robustness testing functionality.
 
 This script demonstrates:
 1. Automatic database loading to find the best MSE
@@ -64,7 +63,7 @@ def test_database_finding():
     result = load_best_result_from_database(db_path)
     if result:
       best_mse, best_mae, hyperparams = result
-      print(f"✓ Successfully loaded best result:")
+      print("✓ Successfully loaded best result:")
       print(f"  - Best MSE: {best_mse:.6f}")
       print(f"  - Best MAE: {best_mae:.6f}")
       print(f"  - Hyperparameters: {hyperparams}")

@@ -66,6 +66,7 @@ class StackedKroneckerProductLayer(L.LightningModule):
     nn.init.kaiming_uniform_(self.factor_B, a=math.sqrt(5))
 
   def forward(self, x: Tensor) -> Tensor:
+    """Apply the Kronecker-product linear projection to x."""
     if x.size(-1) != self.input_dim:
       raise ValueError(f"Expected input dimension {self.input_dim}, but got {x.size(-1)}.")
 
@@ -107,6 +108,7 @@ class StackedKroneckerProductLayer(L.LightningModule):
 
 
 def demo() -> None:
+  """Demonstrate StackedKroneckerProductLayer on a random input tensor."""
   input_dim = 10
   output_dim = 8
   batch_size = 4
