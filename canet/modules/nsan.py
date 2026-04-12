@@ -1,4 +1,4 @@
-"""Neural Style Adaptive Normalization (NSAN) components."""
+"""Non-stationary Adaptive Normalization (NSAN) components."""
 
 import lightning as L
 import torch
@@ -115,7 +115,6 @@ class AdaIN(L.LightningModule):
     self.eps = _ADAIN_EPS
 
   def forward(self, x: Tensor, style_mean: Tensor, style_std: Tensor) -> Tensor:
-    """Normalize x and rescale with provided style statistics."""
     mean_x: Tensor = torch.mean(x, dim=1, keepdim=True).detach()
 
     std_x: Tensor = torch.std(x, dim=1, keepdim=True).detach()

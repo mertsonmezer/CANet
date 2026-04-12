@@ -9,16 +9,11 @@ from dataclasses import asdict
 from typing import Any
 
 import lightning as L
+import optuna
 import pandas as pd
 import torch
-from lightning.pytorch.callbacks import (
-  LearningRateMonitor,
-  ModelCheckpoint,
-  TQDMProgressBar,
-)
+from lightning.pytorch.callbacks import LearningRateMonitor, ModelCheckpoint, TQDMProgressBar
 from torch.utils.data import DataLoader
-
-import optuna
 
 from canet.canet import TrainedCANet
 from config.canet_config import CANetDataConfig, CANetTrainConfig
@@ -58,8 +53,7 @@ def _load_best_params(dataset: str, study_params: str) -> dict:
   paths = TunePaths(dataset=dataset, study_params=study_params)
   if not paths.db_path.exists():
     raise FileNotFoundError(
-      f"No study DB found at {paths.db_path}. "
-      "Run train_tune.py for this configuration first."
+      f"No study DB found at {paths.db_path}. Run train_tune.py for this configuration first."
     )
   study_name = f"{dataset}-{study_params}"
   study = optuna.load_study(study_name=study_name, storage=paths.db_url)
@@ -355,4 +349,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+  main()
+  main()
   main()
