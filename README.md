@@ -85,22 +85,77 @@ datasets/
 > **Note on `--root_path`:** experiment scripts pass this path relative to the working directory (repo root). ETT/Electricity/Exchange/Traffic/Weather scripts use bare subdirectory names (e.g., `ETT-small/`); the ILI script uses the full `datasets/ILI/` prefix. Ensure your data layout matches these paths before running.
 
 ## 🧪 Experiments
-We provide ready-to-use bash scripts for running experiments. For example, to run the long-term forecasting experiment on the ETTh1 dataset:
-
-1. Ensure you have the ETTh1 dataset downloaded and ready.
-2. Make the experiment script executable and run it with the following commands:
-
-```bash
-chmod +x scripts/etth1.sh  # Ensure the script is executable
-bash scripts/etth1.sh      # Run the experiment
-```
-
-As shown in the figure below, CANet consistently achieves superior performance on long-term forecasting tasks across various real-world datasets, demonstrating its robustness and effectiveness in handling non-stationary time series data.
 
 <p align="center">
   <img src="figs/longterm_forecasting_results.jpg" alt="Long-term Forecasting Results" width="95%"/>
 </p>
 <p align="center"><i>Figure: CANet outperforms state-of-the-art models across multiple datasets and forecasting horizons</i></p>
+
+The standard workflow is: **tune → train → evaluate**.
+
+### 1. Hyperparameter tuning
+
+Ready-to-run scripts are provided for all eight datasets. Each script loops over the four standard forecasting horizons (96 / 192 / 336 / 720) and runs 100 Optuna trials per horizon. The best checkpoint is automatically promoted to `experiments/{dataset}/tune/{study-name}/best/`.
+
+```bash
+bash scripts/etth1.sh       # ETTh1
+bash scripts/etth2.sh       # ETTh2
+bash scripts/ettm1.sh       # ETTm1
+bash scripts/ettm2.sh       # ETTm2
+bash scripts/electricity.sh
+bash scripts/exchange.sh
+bash scripts/traffic.sh
+bash scripts/weather.sh     # ILI uses pred_len 24/36/48/60
+bash scripts/ili.sh
+```
+
+> **Memory tip:** for large datasets or long horizons, reduce `--batch_sizes`. See `scripts/exchange.sh` for an example.
+
+### 2. Single-run training
+
+Train with the best hyperparameters found by a completed tuning study:
+
+```bash
+uv run python -m forecasting.train \
+  --data_name ETTh1 \
+  --root_path ETT-small/ \
+  --data_path ETTh1.csv \
+  --num_channels 7 \
+  --seq_len 96 --pred_len 96 \
+  --from_study
+```
+
+`--from_study` loads hyperparameters from the matching Optuna DB under `experiments/ETTh1/tune/`. Omit it to pass hyperparameters explicitly via CLI flags. Artifacts are saved to `experiments/{dataset}/train/{run}/`: checkpoint, `config.json`, `results.xlsx`, and TensorBoard logs.
+
+### 3. Evaluation
+
+**Inference and metrics** on the test split:
+
+```bash
+uv run python -m evaluation.inference \
+  --model_path experiments/ETTh1/train/<run>/train-epoch=N.ckpt
+
+# Add --visualize to plot input vs. predicted output for a sample:
+uv run python -m evaluation.inference \
+  --model_path <path> --visualize --example_id 0
+```
+
+**Study analysis** — best-trial parameters, filtered statistics, and 90% confidence interval:
+
+```bash
+uv run python -m evaluation.analyze_study \
+  --study_name "ETTh1-SeqLen96-PredLen96-FirstNormlayer-SecondNormnsan-RankReductionTrue" \
+  --dataset ETTh1
+```
+
+The study name follows the pattern `{dataset}-SeqLen{L}-PredLen{H}-FirstNorm{norm1}-SecondNorm{norm2}-RankReduction{bool}`.
+
+**Model complexity** — parameter count and average inference latency:
+
+```bash
+uv run python -m evaluation.compute_model_complexity \
+  --model_path <path>
+```
 
 ## 📬 Contact
 If you have any questions or concerns, feel free to reach out:
