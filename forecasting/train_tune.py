@@ -25,34 +25,29 @@ from torch.utils.data import DataLoader
 from canet.canet import TrainedCANet
 from config.canet_config import CANetDataConfig, CANetTrainConfig
 from data.data_factory import data_provider
+from utils.paths import TunePaths, build_study_params
 
 logger = logging.getLogger(__name__)
 
 
-def clean_trial_logs(study: optuna.Study, config: CANetTrainConfig, logs_dir: str) -> None:
-  """Cleans up non-best trial directories from the log directory.
+def clean_trial_logs(study: optuna.Study, paths: TunePaths) -> None:
+  """Cleans up non-best trial directories from the study directory.
 
-  This function removes the directories of trials that did not yield the best results.
+  This function removes the per-trial artifact directories of all trials
+  that did not yield the best result. The best trial's directory is left
+  intact for the subsequent promotion step.
 
   Args:
     study: The Optuna study containing all trials.
-    config: Configuration object containing training settings.
-    logs_dir: The directory where trial logs are stored.
+    paths: TunePaths instance pointing at this study's root directory.
   """
   best_trial_number: int = study.best_trial.number
   logger.info("Best trial is %d, cleaning up non-best trial directories.", best_trial_number)
 
   for trial in study.trials:
     if trial.number != best_trial_number:
-      trial_prefix: str = (
-        f"{config.data_config.data_name}-SeqLen{config.seq_len}-"
-        f"PredLen{config.pred_len}-FirstNorm{config.first_norm_layer}-"
-        f"SecondNorm{config.second_norm_layer}-RankReduction{config.use_rank_reduction}"
-      )
-      trial_dir: str = os.path.join(logs_dir, f"{trial_prefix}-Trial{trial.number}")
-
-      # Delete the trial directory if it exists
-      if os.path.exists(trial_dir):
+      trial_dir = paths.trial_dir(trial.number)
+      if trial_dir.exists():
         logger.info("Deleting %s", trial_dir)
         shutil.rmtree(trial_dir, ignore_errors=True)
 
@@ -122,7 +117,10 @@ def train_model(
 
 
 def objective(
-  trial: optuna.trial.Trial, args: argparse.Namespace, config: CANetTrainConfig
+  trial: optuna.trial.Trial,
+  args: argparse.Namespace,
+  config: CANetTrainConfig,
+  tune_paths: TunePaths,
 ) -> float:
   """Objective function for Optuna hyperparameter tuning.
 
@@ -133,6 +131,7 @@ def objective(
     trial: An Optuna trial instance used for suggesting hyperparameter values.
     args: Parsed CLI arguments with hyperparameter search ranges.
     config: A configuration object containing model and training parameters.
+    tune_paths: Paths helper for this study; provides the trial artifact directory.
 
   Returns:
     float: The MSE result on the test set, which is used as the objective value.
@@ -149,14 +148,11 @@ def objective(
   _, val_dataloader = data_provider(config, flag="val")
   _, test_dataloader = data_provider(config, flag="test")
 
-  run_description: str = (
-    f"{config.data_config.data_name}-SeqLen{config.seq_len}-PredLen{config.pred_len}-"
-    f"FirstNorm{config.first_norm_layer}-SecondNorm{config.second_norm_layer}-"
-    f"RankReduction{config.use_rank_reduction}-Trial{trial._trial_id - 1}"
-  )
-  logger.info("========== %s ===========", run_description)
+  trial_dir = tune_paths.trial_dir(trial.number)
+  trial_dir.mkdir(parents=True, exist_ok=True)
+  logger.info("========== Trial %d → %s ===========", trial.number, trial_dir)
 
-  checkpoint_dir_path: str = f"logs/{run_description}"
+  checkpoint_dir_path: str = str(trial_dir)
   checkpoint_callback = ModelCheckpoint(
     dirpath=checkpoint_dir_path,
     save_top_k=1,
@@ -178,18 +174,11 @@ def objective(
   total_params: int = sum(p.numel() for p in model.parameters())
 
   # Save configuration and results
-  with open(os.path.join(checkpoint_dir_path, "model.txt"), "w", encoding="utf-8") as f:
-    f.write(f"Total Number of Parameters: {str(total_params)}\n\n")
-    f.write("Training Configuration:\n")
-    json.dump(asdict(config), f, indent=2)
+  with open(trial_dir / "config.json", "w", encoding="utf-8") as f:
+    json.dump({"total_params": total_params, "config": asdict(config)}, f, indent=2)
 
   df = pd.DataFrame({"MSE": mse_result, "MAE": mae_result})
-  df.to_excel(
-    os.path.join(
-      checkpoint_dir_path,
-      "results.xlsx",
-    )
-  )
+  df.to_excel(trial_dir / "results.xlsx")
 
   return mse_result["test"]
 
@@ -351,6 +340,8 @@ def main() -> None:
 
   sampler = TPESampler(seed=train_config.seed)
 
+  # study_name is the Optuna-internal identifier stored inside the DB — keep it unchanged
+  # so that load_if_exists=True can resume existing studies correctly.
   study_name: str = (
     f"{train_config.data_config.data_name}"
     f"-SeqLen{train_config.seq_len}"
@@ -359,7 +350,16 @@ def main() -> None:
     f"-SecondNorm{train_config.second_norm_layer}"
     f"-RankReduction{train_config.use_rank_reduction}"
   )
-  storage: str = f"sqlite:///{study_name}.db"
+  study_params = build_study_params(
+    train_config.seq_len,
+    train_config.pred_len,
+    train_config.first_norm_layer,
+    train_config.second_norm_layer,
+    train_config.use_rank_reduction,
+  )
+  tune_paths = TunePaths(dataset=train_config.data_config.data_name, study_params=study_params)
+  tune_paths.study_root.mkdir(parents=True, exist_ok=True)
+  storage: str = tune_paths.db_url
 
   study: optuna.Study = optuna.create_study(
     study_name=study_name,
@@ -368,7 +368,7 @@ def main() -> None:
     load_if_exists=True,
     sampler=sampler,
   )
-  objective_partial = partial(objective, args=args, config=train_config)
+  objective_partial = partial(objective, args=args, config=train_config, tune_paths=tune_paths)
   study.optimize(
     objective_partial,
     n_trials=args.num_trials,
@@ -382,8 +382,14 @@ def main() -> None:
     t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE
   ]
 
-  # Clean up all non-best trial directories
-  clean_trial_logs(study, train_config, "logs")
+  # Clean up non-best trial directories, then promote best artifacts to best/
+  clean_trial_logs(study, tune_paths)
+  best_src = tune_paths.trial_dir(study.best_trial.number)
+  if best_src.exists():
+    if tune_paths.best_dir.exists():
+      shutil.rmtree(tune_paths.best_dir)
+    shutil.copytree(best_src, tune_paths.best_dir)
+    logger.info("Best trial artifacts promoted to %s", tune_paths.best_dir)
 
   logger.info("Study statistics:")
   logger.info("  Number of finished trials: %d", len(study.trials))
