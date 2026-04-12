@@ -80,7 +80,10 @@ def measure_inference_time(
 
 
 def main():
-  logging.basicConfig(level=logging.INFO, format="%(asctime)s — %(name)s — %(levelname)s — %(message)s")
+  logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
+  )
   parser = argparse.ArgumentParser(description="Evaluate CANet model performance.")
   parser.add_argument(
     "--model_path",

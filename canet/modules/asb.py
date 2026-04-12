@@ -26,8 +26,12 @@ class AdaptiveSpectralBlock(L.LightningModule):
 
   def __init__(self, dim: int) -> None:
     super().__init__()
-    self.complex_weight_high = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * _WEIGHT_INIT_STD)
-    self.complex_weight = nn.Parameter(torch.randn(dim, 2, dtype=torch.float32) * _WEIGHT_INIT_STD)
+    self.complex_weight_high = nn.Parameter(
+      torch.randn(dim, 2, dtype=torch.float32) * _WEIGHT_INIT_STD
+    )
+    self.complex_weight = nn.Parameter(
+      torch.randn(dim, 2, dtype=torch.float32) * _WEIGHT_INIT_STD
+    )
 
     trunc_normal_(self.complex_weight_high, std=_WEIGHT_INIT_STD)
     trunc_normal_(self.complex_weight, std=_WEIGHT_INIT_STD)

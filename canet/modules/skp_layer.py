@@ -33,7 +33,9 @@ class StackedKroneckerProductLayer(L.LightningModule):
       ``input_dim``.
   """
 
-  def __init__(self, input_dim: int, output_dim: int, scale: float = 0.5, verbose: bool = False) -> None:
+  def __init__(
+    self, input_dim: int, output_dim: int, scale: float = 0.5, verbose: bool = False
+  ) -> None:
     super().__init__()
 
     if input_dim <= 0 or output_dim <= 0:

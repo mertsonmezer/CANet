@@ -25,7 +25,8 @@ def sin_cos_positional_encoding(
     normalize (bool, optional): Whether to normalize the encoding. Defaults to False.
 
   Returns:
-    torch.Tensor: A tensor of shape (sequence_length, embedding_dim) containing positional encodings.
+    torch.Tensor: A tensor of shape ``(sequence_length, embedding_dim)`` containing
+      positional encodings.
   """
   encoding: Tensor = torch.zeros(sequence_length, embedding_dim)
   positions: Tensor = torch.arange(sequence_length).unsqueeze(1)  # Position indices
@@ -53,7 +54,8 @@ def coordinate_1d_positional_encoding(
 
   Args:
     sequence_length (int): Length of the input sequence.
-    use_exponential (bool, optional): Whether to use an exponential scale for encoding. Defaults to False.
+    use_exponential (bool, optional): Whether to use an exponential scale for encoding.
+      Defaults to False.
     normalize (bool, optional): Whether to normalize the encoding. Defaults to True.
 
   Returns:
@@ -87,7 +89,8 @@ def coordinate_2d_positional_encoding(
   Args:
     sequence_length (int): Length of the input sequence.
     embedding_dim (int): Dimensionality of the embeddings.
-    use_exponential (bool, optional): Whether to use an exponential scale for encoding. Defaults to False.
+    use_exponential (bool, optional): Whether to use an exponential scale for encoding.
+      Defaults to False.
     normalize (bool, optional): Whether to normalize the encoding. Defaults to True.
     tolerance (float, optional): Tolerance for the mean value of the encoding. Defaults to 1e-3.
 

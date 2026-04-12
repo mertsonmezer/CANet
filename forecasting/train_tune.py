@@ -310,7 +310,13 @@ def main():
 
   logging.basicConfig(level=logging.INFO, format="%(asctime)s — %(name)s — %(levelname)s — %(message)s")
 
-  args.patch_sizes = ast.literal_eval(args.patch_sizes)
+  try:
+    args.patch_sizes = ast.literal_eval(args.patch_sizes)
+  except (ValueError, SyntaxError) as exc:
+    raise SystemExit(
+      f"Invalid --patch_sizes value {args.patch_sizes!r}. "
+      "Expected a list of lists, e.g. '[[8, 64], [16, 128]]'."
+    ) from exc
 
   data_config = CANetDataConfig(
     data_name=args.data_name,
