@@ -5,6 +5,8 @@
   <a href="https://github.com/mertsonmezer/CANet/network/members"><img src="https://img.shields.io/github/forks/mertsonmezer/CANet" alt="Forks"></a>
   <a href="https://github.com/mertsonmezer/CANet/issues"><img src="https://img.shields.io/github/issues/mertsonmezer/CANet" alt="Issues"></a>
   <a href="https://github.com/mertsonmezer/CANet/blob/main/LICENSE"><img src="https://img.shields.io/github/license/mertsonmezer/CANet" alt="License"></a>
+  <a href="https://doi.org/10.1016/j.neunet.2025.108495"><img src="https://img.shields.io/badge/DOI-10.1016%2Fj.neunet.2025.108495-blue" alt="DOI"></a>
+  <a href="https://arxiv.org/abs/2504.17913"><img src="https://img.shields.io/badge/arXiv-2504.17913-b31b1b" alt="arXiv"></a>
 </p>
 <p align="center">
   <b>Official implementation</b> |
@@ -187,10 +189,11 @@ If you have any questions or concerns, feel free to reach out:
 If you found this work useful, please consider citing it:
 ```bibtex
 @article{canet2025,
-  title     = {CANet: ChronoAdaptive Network for Long-term Time Series Forecasting},
-  author    = {Mert Sonmezer and Seyda Ertekin},
-  journal   = {Neural Networks},
-  year      = {2025}
+  title   = {CANet: ChronoAdaptive Network for Long-term Time Series Forecasting},
+  author  = {Mert Sonmezer and Seyda Ertekin},
+  journal = {Neural Networks},
+  year    = {2025},
+  doi     = {10.1016/j.neunet.2025.108495},
 }
 ```
 
