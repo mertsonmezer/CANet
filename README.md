@@ -84,7 +84,7 @@ uv run python -c "import canet; print('Environment OK')"
 | `evaluation/analyze_study.py` | Optuna study statistics and confidence intervals |
 | `evaluation/compute_model_complexity.py` | Parameter count and inference latency |
 | `scripts/` | Ready-to-run bash experiments (one script per dataset) |
-| `experiments/` | Auto-generated artifacts: checkpoints, `config.json`, `results.xlsx`, TensorBoard logs |
+| `experiments/` | Auto-generated artifacts: checkpoints, `config.json`, `results.xlsx` |
 
 ## 📊 Datasets
 
@@ -118,18 +118,16 @@ The standard workflow is: **tune → train → evaluate**.
 Ready-to-run scripts are provided for all eight datasets. Each script loops over the four standard forecasting horizons (96 / 192 / 336 / 720) and runs 100 Optuna trials per horizon. The best checkpoint is automatically promoted to `experiments/{dataset}/tune/{study-name}/best/`.
 
 ```bash
-bash scripts/etth1.sh       # ETTh1
-bash scripts/etth2.sh       # ETTh2
-bash scripts/ettm1.sh       # ETTm1
-bash scripts/ettm2.sh       # ETTm2
+bash scripts/etth1.sh       
+bash scripts/etth2.sh       
+bash scripts/ettm1.sh       
+bash scripts/ettm2.sh       
 bash scripts/electricity.sh
 bash scripts/exchange.sh
 bash scripts/traffic.sh
-bash scripts/weather.sh     # ILI uses pred_len 24/36/48/60
+bash scripts/weather.sh     
 bash scripts/ili.sh
 ```
-
-> **Memory tip:** for large datasets or long horizons, reduce `--batch_sizes`. See `scripts/exchange.sh` for an example.
 
 ### 2. Single-run training
 
@@ -145,7 +143,7 @@ uv run python -m forecasting.train \
   --from_study
 ```
 
-`--from_study` loads hyperparameters from the matching Optuna DB under `experiments/ETTh1/tune/`. Omit it to pass hyperparameters explicitly via CLI flags. Artifacts are saved to `experiments/{dataset}/train/{run}/`: checkpoint, `config.json`, `results.xlsx`, and TensorBoard logs.
+`--from_study` loads hyperparameters from the matching Optuna DB under `experiments/ETTh1/tune/`. Omit it to pass hyperparameters explicitly via CLI flags. Artifacts are saved to `experiments/{dataset}/train/{run}/`: checkpoint, `config.json`, and `results.xlsx`.
 
 ### 3. Evaluation
 
