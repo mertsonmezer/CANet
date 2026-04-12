@@ -1,7 +1,7 @@
 for pred_len in 96 192 336 720
 do
-  python3 -m forecasting.train_tune \
-    --data_name "custom" \
+  uv run python -m forecasting.train_tune \
+    --data_name "Electricity" \
     --root_path "Electricity/" \
     --data_path "electricity.csv" \
     --num_channels 321 \

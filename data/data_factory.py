@@ -31,7 +31,7 @@ def data_provider(config: CANetTrainConfig, flag: str) -> tuple[Dataset, DataLoa
   Returns:
     A ``(dataset, dataloader)`` pair ready for Lightning training.
   """
-  Data = data_dict[config.data_config.data_name]
+  Data = data_dict.get(config.data_config.data_name, Dataset_Custom)
   timeenc = 0 if config.data_config.embed != "timeF" else 1
 
   if flag == "test":
