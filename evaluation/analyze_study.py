@@ -65,6 +65,10 @@ def calculate_confidence_interval(
 
 def main() -> None:
   """Entry point — parse arguments and run the main workflow."""
+  logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
+  )
   parser = argparse.ArgumentParser(description="Analyze Optuna study results.")
   parser.add_argument("--study_name", type=str, required=True, help="Name of the Optuna study.")
   parser.add_argument(
