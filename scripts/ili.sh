@@ -1,6 +1,6 @@
 for pred_len in 24 36 48 60
 do
-  python3 -m forecasting.train_tune \
+  uv run python -m forecasting.train_tune \
     --data_name "ILI" \
     --root_path "datasets/ILI/" \
     --data_path "illness.csv" \

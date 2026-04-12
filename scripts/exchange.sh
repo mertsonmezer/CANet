@@ -1,6 +1,6 @@
 for pred_len in 96 192 336
 do
-  python3 -m forecasting.train_tune \
+  uv run python -m forecasting.train_tune \
     --data_name "Exchange" \
     --root_path "Exchange/" \
     --data_path "exchange_rate.csv" \
@@ -24,7 +24,7 @@ do
 done
 
 # Note: When pred_len was 720, BATCH_SIZES was set to [16, 32] for the memory issues.
-python3 -m forecasting.train_tune \
+uv run python -m forecasting.train_tune \
   --data_name "Exchange" \
   --root_path "Exchange/" \
   --data_path "exchange_rate.csv" \
