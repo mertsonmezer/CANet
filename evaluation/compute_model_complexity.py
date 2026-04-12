@@ -83,12 +83,23 @@ def main() -> None:
     level=logging.INFO,
     format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
   )
-  parser = argparse.ArgumentParser(description="Evaluate CANet model performance.")
+  parser = argparse.ArgumentParser(
+    description="Profile parameter count and per-sample inference time for a trained CANet checkpoint."
+  )
   parser.add_argument(
     "--model_path",
     type=str,
     required=True,
     help="Path to the CANet model checkpoint (.ckpt file).",
+  )
+  parser.add_argument(
+    "--num_trials",
+    type=int,
+    default=25,
+    help=(
+      "Number of inference passes averaged to estimate latency. "
+      "Higher values reduce variance. Default: 25."
+    ),
   )
   args: argparse.Namespace = parser.parse_args()
 
@@ -104,7 +115,7 @@ def main() -> None:
   logger.info("Total Parameters: %s", f"{total_params:,}")
 
   # Inference time calculation
-  avg_inference_time: float = measure_inference_time(model, test_dataloader)
+  avg_inference_time: float = measure_inference_time(model, test_dataloader, num_trials=args.num_trials)
   logger.info("Average Inference Time: %.4f ms", avg_inference_time)
 
 

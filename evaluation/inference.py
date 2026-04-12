@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 def perform_inference(
   model: TrainedCANet, dataloader: DataLoader
 ) -> tuple[Tensor, Tensor, Tensor, float, float, float]:
-  """Performs inference on the test dataset and evaluates performance.
+  """Performs inference on the first batch of the test dataloader and evaluates performance.
 
   Args:
     model (TrainedCANet): The trained CANet model.
@@ -136,7 +136,12 @@ def main() -> None:
     level=logging.INFO,
     format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
   )
-  parser = argparse.ArgumentParser(description="Inference of CANet model.")
+  parser = argparse.ArgumentParser(
+    description=(
+      "Run inference on one test batch from a trained CANet checkpoint "
+      "and report MSE, MAE, and latency."
+    )
+  )
   parser.add_argument(
     "--model_path",
     type=str,
@@ -159,6 +164,14 @@ def main() -> None:
 
   # Perform inference
   inputs, targets, outputs, _, _, _ = perform_inference(model, test_dataloader)
+
+  # Fail fast: --example_id must be a valid index into the batch dimension.
+  batch_size: int = inputs.shape[0]
+  if args.example_id >= batch_size:
+    parser.error(
+      f"--example_id {args.example_id} is out of range: "
+      f"the test batch has {batch_size} examples (valid range: 0 to {batch_size - 1})."
+    )
 
   # Visualize results for the specified example
   if args.visualize:

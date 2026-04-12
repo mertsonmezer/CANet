@@ -11,8 +11,6 @@ from numpy._typing._array_like import NDArray
 from optuna.trial._frozen import FrozenTrial
 from optuna.visualization import plot_slice
 
-warnings.filterwarnings("ignore", category=UserWarning)
-
 logger = logging.getLogger(__name__)
 
 
@@ -65,7 +63,16 @@ def calculate_confidence_interval(
 
 def main() -> None:
   """Entry point — parse arguments and run the main workflow."""
-  parser = argparse.ArgumentParser(description="Analyze Optuna study results.")
+  logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s — %(name)s — %(levelname)s — %(message)s",
+  )
+  parser = argparse.ArgumentParser(
+    description=(
+      "Analyze a completed Optuna HPO study: print best trial, parameter breakdown, "
+      "and 90% confidence interval of filtered objective values."
+    )
+  )
   parser.add_argument("--study_name", type=str, required=True, help="Name of the Optuna study.")
   parser.add_argument(
     "--dataset",
@@ -105,9 +112,11 @@ def main() -> None:
     # Strip the dataset prefix to obtain the study_params component.
     study_params = args.study_name[len(args.dataset) + 1 :]
     storage = TunePaths(dataset=args.dataset, study_params=study_params).db_url
-  study: optuna.Study = optuna.create_study(
-    study_name=args.study_name, storage=storage, load_if_exists=True
-  )
+  with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=UserWarning)
+    study: optuna.Study = optuna.create_study(
+      study_name=args.study_name, storage=storage, load_if_exists=True
+    )
 
   # Display the best trial
   best_trial: FrozenTrial = study.best_trial
