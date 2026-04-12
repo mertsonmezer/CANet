@@ -1,7 +1,7 @@
 [project]
 name = "canet"
 version = "0.1.0"
-description = "CANet: ChronoAdaptive Network Network"
+description = "CANet: ChronoAdaptive Network"
 requires-python = ">=3.10"
 dependencies = [
   "einops>=0.8.0",

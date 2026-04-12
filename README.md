@@ -7,7 +7,10 @@
   <a href="https://github.com/mertsonmezer/CANet/blob/main/LICENSE"><img src="https://img.shields.io/github/license/mertsonmezer/CANet" alt="License"></a>
 </p>
 <p align="center">
-  <b>Official implementation</b> | <a href="#">Paper</a> | <a href="#citation">Cite</a>
+  <b>Official implementation</b> |
+  <a href="https://doi.org/10.1016/j.neunet.2025.108495">Paper (Neural Networks)</a> |
+  <a href="https://arxiv.org/abs/2504.17913">arXiv</a> |
+  <a href="#citation">Cite</a>
 </p>
 <p align="center">
   <img src="figs/model_architecture.jpg" alt="CANet Architecture" width="80%"/>
@@ -33,6 +36,10 @@ Compared to state-of-the-art methods, CANet consistently delivers more accurate 
 
 ## 🛠️ Setup
 
+**Prerequisites**
+- Python ≥ 3.10
+- CUDA-capable GPU recommended; CPU training is feasible but slow
+
 **1. Install uv**
 If you don't have [uv](https://docs.astral.sh/uv/) installed, follow the [official installation instructions](https://docs.astral.sh/uv/getting-started/installation/).
 
@@ -47,15 +54,35 @@ cd CANet
 uv sync
 ```
 
-This creates a virtual environment and installs all required dependencies automatically. To activate it:
+This creates a virtual environment and installs all required dependencies automatically. All commands below use `uv run` and do not require activating the virtual environment. To activate it manually for ad-hoc use:
 ```bash
 source .venv/bin/activate
 ```
 
+**4. Verify installation**
+```bash
+uv run python -c "import canet; print('Environment OK')"
+```
+
 ## 📊 Datasets
-The datasets used in our experiments can be obtained from the following repository:
+
+Download the benchmark datasets from:
 
 [![thuml/Time-Series-Library](https://img.shields.io/badge/-Time_Series_Library_(TSLib)-181717?logo=github&logoColor=white&style=for-the-badge)](https://github.com/thuml/Time-Series-Library)
+
+Place the CSV files under a `datasets/` directory at the repo root, matching the structure below:
+
+```
+datasets/
+├── ETT-small/       # ETTh1.csv  ETTh2.csv  ETTm1.csv  ETTm2.csv
+├── Electricity/     # electricity.csv
+├── Exchange/        # exchange_rate.csv
+├── ILI/             # illness.csv
+├── Traffic/         # traffic.csv
+└── Weather/         # weather.csv
+```
+
+> **Note on `--root_path`:** experiment scripts pass this path relative to the working directory (repo root). ETT/Electricity/Exchange/Traffic/Weather scripts use bare subdirectory names (e.g., `ETT-small/`); the ILI script uses the full `datasets/ILI/` prefix. Ensure your data layout matches these paths before running.
 
 ## 🧪 Experiments
 We provide ready-to-use bash scripts for running experiments. For example, to run the long-term forecasting experiment on the ETTh1 dataset:
@@ -64,8 +91,8 @@ We provide ready-to-use bash scripts for running experiments. For example, to ru
 2. Make the experiment script executable and run it with the following commands:
 
 ```bash
-chmod +x scripts/longterm_forecasting/etth1.sh  # Ensure the script is executable
-./scripts/longterm_forecasting/etth1.sh         # Run the experiment
+chmod +x scripts/etth1.sh  # Ensure the script is executable
+bash scripts/etth1.sh      # Run the experiment
 ```
 
 As shown in the figure below, CANet consistently achieves superior performance on long-term forecasting tasks across various real-world datasets, demonstrating its robustness and effectiveness in handling non-stationary time series data.
@@ -79,7 +106,7 @@ As shown in the figure below, CANet consistently achieves superior performance o
 If you have any questions or concerns, feel free to reach out:
 
 📧 **Email:** [mert.sonmezer@metu.edu.tr](mailto:mert.sonmezer@metu.edu.tr)
-🐛 **Issues:** [Submit an issue](https://github.com/canet/issues)
+🐛 **Issues:** [Submit an issue](https://github.com/mertsonmezer/CANet/issues)
 
 ## 📖 Citation
 If you found this work useful, please consider citing it:
